@@ -1,0 +1,5076 @@
+{
+  "business": {
+    "name": "Zuki's Caffetteria",
+    "website": "https://zukiscaffetteria.co.uk/",
+    "address": "3B Queen Street, Exeter EX4 3SB, United Kingdom",
+    "phone": "+44 1392 666999",
+    "currency": "GBP"
+  },
+  "opening_hours": {
+    "monday": {
+      "open": "08:00",
+      "close": "17:00"
+    },
+    "tuesday": {
+      "open": "08:00",
+      "close": "17:00"
+    },
+    "wednesday": {
+      "open": "08:00",
+      "close": "17:00"
+    },
+    "thursday": {
+      "open": "08:00",
+      "close": "17:00"
+    },
+    "friday": {
+      "open": "08:00",
+      "close": "17:00"
+    },
+    "saturday": {
+      "open": "09:00",
+      "close": "17:00"
+    },
+    "sunday": {
+      "open": "10:00",
+      "close": "16:00"
+    }
+  },
+  "menu_service": {
+    "full_menu_until": "16:00",
+    "brunch_mimosa_add_on": "£5.95",
+    "site_text": "Full menu served all day till 4pm. Add a Mimosa to your brunch for £5.95.",
+    "normalized_brunch_mimosa_add_on": {
+      "kind": "surcharge",
+      "amount": 5.95,
+      "amount_minor": 595,
+      "pricing_effect": "surcharge",
+      "qualifiers": {
+        "variant": "Mimosa"
+      },
+      "evidence": {
+        "source": "menu_service",
+        "source_path": "/menu_service/brunch_mimosa_add_on",
+        "raw_text": "£5.95"
+      },
+      "qualifier_evidence": {
+        "source": "menu_service",
+        "source_path": "/menu_service/site_text",
+        "raw_text": "Full menu served all day till 4pm. Add a Mimosa to your brunch for £5.95."
+      }
+    }
+  },
+  "menu": [
+    {
+      "section": "Breakfast & Brunch",
+      "items": [
+        {
+          "name": "Traditional English",
+          "price": "£12.95",
+          "dietary": [],
+          "description": "2 bacon, 2 sausages, fried egg, hash brown, mushroom, tomato & baked beans. Served with toast.",
+          "item_id": "breakfast-brunch--traditional-english",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.95,
+                "amount_minor": 1295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/0/price",
+                  "raw_text": "£12.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Vegan Breakfast",
+          "price": "£12.95",
+          "dietary": [
+            "vegan"
+          ],
+          "description": "2 vegan sausages, avocado, 2 hash browns, mushroom, tomato, baked beans, grilled spinach & hummus. Served with toast.",
+          "item_id": "breakfast-brunch--vegan-breakfast",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.95,
+                "amount_minor": 1295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/1/price",
+                  "raw_text": "£12.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Turkish",
+          "price": "£13.25",
+          "dietary": [],
+          "description": "Sucuk, fried egg, feta, halloumi, olives, honey, tomato & cucumber. Served with pitta, butter & jam.",
+          "item_id": "breakfast-brunch--turkish",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£13.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 13.25,
+                "amount_minor": 1325,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/2/price",
+                  "raw_text": "£13.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Italian",
+          "price": "£12.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Butter croissant, yoghurt with granola & fruit, toasted sourdough, honey, jam & butter. Choice of latte, cappuccino or freshly pressed orange juice.",
+          "item_id": "breakfast-brunch--italian",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.95,
+                "amount_minor": 1295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/3/price",
+                  "raw_text": "£12.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Dee's Favourite",
+          "price": "£12.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Mushroom & spinach, grilled halloumi, fried egg, falafel & hummus. Served with pitta.",
+          "item_id": "breakfast-brunch--dee-s-favourite",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.95,
+                "amount_minor": 1295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/4/price",
+                  "raw_text": "£12.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Avocado on Toast",
+          "price": "£11.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Avocado, feta & chilli flakes on toasted sourdough. Served with rocket & cherry tomatoes. Add 2 poached eggs £2.50.",
+          "item_id": "breakfast-brunch--avocado-on-toast",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.95,
+                "amount_minor": 1195,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/5/price",
+                  "raw_text": "£11.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Avocado, feta & chilli flakes on toasted sourdough. Served with rocket & cherry tomatoes. Add 2 poached eggs £2.50.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 2.5,
+                "amount_minor": 250,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "quantity": 2,
+                  "variant": "poached eggs"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/5/description",
+                  "raw_text": "Add 2 poached eggs £2.50"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/5/description",
+                  "raw_text": "Add 2 poached eggs £2.50"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Avocado, Smoked Salmon & Poached Eggs",
+          "price": "£12.95",
+          "dietary": [],
+          "description": "Poached eggs, avocado & smoked salmon on toasted sourdough. Served with rocket & cherry tomatoes.",
+          "item_id": "breakfast-brunch--avocado-smoked-salmon-poached-eggs",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.95,
+                "amount_minor": 1295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/6/price",
+                  "raw_text": "£12.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Zuki's Favourite",
+          "price": "£11.75",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Avocado, grilled halloumi & two fried eggs on sourdough. Served with rocket & cherry tomatoes. Add bacon £2.75.",
+          "item_id": "breakfast-brunch--zuki-s-favourite",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.75,
+                "amount_minor": 1175,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/7/price",
+                  "raw_text": "£11.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Avocado, grilled halloumi & two fried eggs on sourdough. Served with rocket & cherry tomatoes. Add bacon £2.75.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 2.75,
+                "amount_minor": 275,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "bacon"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/7/description",
+                  "raw_text": "Add bacon £2.75"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/7/description",
+                  "raw_text": "Add bacon £2.75"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Eggs Benedict",
+          "price": "£11.25",
+          "dietary": [],
+          "description": "Poached eggs with ham on sourdough, Hollandaise sauce. Served with rocket salad & cherry tomatoes.",
+          "item_id": "breakfast-brunch--eggs-benedict",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.25,
+                "amount_minor": 1125,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/8/price",
+                  "raw_text": "£11.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Eggs Royale",
+          "price": "£12.75",
+          "dietary": [],
+          "description": "Poached eggs with smoked salmon on sourdough, Hollandaise sauce. Served with rocket & cherry tomatoes.",
+          "item_id": "breakfast-brunch--eggs-royale",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£12.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 12.75,
+                "amount_minor": 1275,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/9/price",
+                  "raw_text": "£12.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Eggs in Purgatory",
+          "price": "£10.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Italian poached eggs in rich tomato sauce with chilli & oregano. Served with garlic sourdough.",
+          "item_id": "breakfast-brunch--eggs-in-purgatory",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£10.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 10.95,
+                "amount_minor": 1095,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/10/price",
+                  "raw_text": "£10.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Menemen",
+          "price": "£10.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Turkish scrambled eggs with tomato & pepper sauce. Served with pitta. Add sucuk £2.25.",
+          "item_id": "breakfast-brunch--menemen",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£10.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 10.95,
+                "amount_minor": 1095,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/0/items/11/price",
+                  "raw_text": "£10.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Turkish scrambled eggs with tomato & pepper sauce. Served with pitta. Add sucuk £2.25.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "sucuk"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/11/description",
+                  "raw_text": "Add sucuk £2.25"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/0/items/11/description",
+                  "raw_text": "Add sucuk £2.25"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "section": "Local favourite",
+      "items": [
+        {
+          "name": "Bacon or Sausage Bap",
+          "price": "£5.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "local-favourite--bacon-or-sausage-bap",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.25,
+                "amount_minor": 525,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/0/price",
+                  "raw_text": "£5.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Breakfast Bap",
+          "price": "£6.95",
+          "dietary": [],
+          "description": "Bacon, sausage, egg & hash brown.",
+          "item_id": "local-favourite--breakfast-bap",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/1/price",
+                  "raw_text": "£6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Vegan Bap",
+          "price": "£5.95",
+          "dietary": [
+            "vegan"
+          ],
+          "description": "Two vegan sausages & two hash browns.",
+          "item_id": "local-favourite--vegan-bap",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/2/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Eggs Your Way on Sourdough",
+          "price": "£7.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Poached, scrambled or fried.",
+          "item_id": "local-favourite--eggs-your-way-on-sourdough",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.95,
+                "amount_minor": 795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/3/price",
+                  "raw_text": "£7.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Ham & Cheese Omelette",
+          "price": "£10.95",
+          "dietary": [],
+          "description": "Served with side salad. Add chips £2.25.",
+          "item_id": "local-favourite--ham-cheese-omelette",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£10.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 10.95,
+                "amount_minor": 1095,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/4/price",
+                  "raw_text": "£10.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Served with side salad. Add chips £2.25.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "chips"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/1/items/4/description",
+                  "raw_text": "Add chips £2.25"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/1/items/4/description",
+                  "raw_text": "Add chips £2.25"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Spinach & Mushroom Omelette",
+          "price": "£11.25",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Served with side salad. Add chips £2.25.",
+          "item_id": "local-favourite--spinach-mushroom-omelette",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.25,
+                "amount_minor": 1125,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/1/items/5/price",
+                  "raw_text": "£11.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Served with side salad. Add chips £2.25.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "chips"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/1/items/5/description",
+                  "raw_text": "Add chips £2.25"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/1/items/5/description",
+                  "raw_text": "Add chips £2.25"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "section": "Sides",
+      "items": [
+        {
+          "name": "French Fries",
+          "price": "£5.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--french-fries",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.25,
+                "amount_minor": 525,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/0/price",
+                  "raw_text": "£5.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Curly Fries",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--curly-fries",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/1/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Side Salad",
+          "price": "£4.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--side-salad",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/2/price",
+                  "raw_text": "£4.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Turkish Olives",
+          "price": "£3.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": null,
+          "item_id": "sides--turkish-olives",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.95,
+                "amount_minor": 395,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/3/price",
+                  "raw_text": "£3.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Fried Halloumi",
+          "price": "£2.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--fried-halloumi",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/4/price",
+                  "raw_text": "£2.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Smoked Salmon",
+          "price": "£2.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--smoked-salmon",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.95,
+                "amount_minor": 295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/5/price",
+                  "raw_text": "£2.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Avocado",
+          "price": "£2.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--avocado",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/6/price",
+                  "raw_text": "£2.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Bacon / Sucuk",
+          "price": "£2.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--bacon-sucuk",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.75,
+                "amount_minor": 275,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/7/price",
+                  "raw_text": "£2.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Hash Brown / Egg / Sausage",
+          "price": "£1.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--hash-brown-egg-sausage",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£1.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 1.25,
+                "amount_minor": 125,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/8/price",
+                  "raw_text": "£1.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Extra Pitta Bread",
+          "price": "£1.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "sides--extra-pitta-bread",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£1.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 1.95,
+                "amount_minor": 195,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/2/items/9/price",
+                  "raw_text": "£1.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Turkish Breakfast Spread",
+      "items": [
+        {
+          "name": "Turkish Breakfast Spread",
+          "price": "for 2 £29.95 / for 4 £52.95",
+          "dietary": [],
+          "description": "Feta, fried halloumi, tomato & cucumber, crispy feta pastry, Turkish sausage, fried eggs, menemen, olives, yoghurt, fruit, honey, jam & butter. Includes unlimited Turkish tea & pitta.",
+          "item_id": "turkish-breakfast-spread--turkish-breakfast-spread",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "for 2 £29.95 / for 4 £52.95",
+            "options": [
+              {
+                "kind": "bundle",
+                "amount": 29.95,
+                "amount_minor": 2995,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/3/items/0/price",
+                  "raw_text": "for 2 £29.95"
+                }
+              },
+              {
+                "kind": "bundle",
+                "amount": 52.95,
+                "amount_minor": 5295,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 4
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/3/items/0/price",
+                  "raw_text": "for 4 £52.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Bruschetta",
+      "items": [
+        {
+          "name": "Classica",
+          "price": "£7.95",
+          "dietary": [
+            "vegan"
+          ],
+          "description": "Cherry tomato, garlic, extra virgin olive oil & oregano.",
+          "item_id": "bruschetta--classica",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.95,
+                "amount_minor": 795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/4/items/0/price",
+                  "raw_text": "£7.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Tricolore",
+          "price": "£8.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Pesto, cherry tomato & burrata.",
+          "item_id": "bruschetta--tricolore",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 8.95,
+                "amount_minor": 895,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/4/items/1/price",
+                  "raw_text": "£8.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Prosciutto",
+          "price": "£9.25",
+          "dietary": [],
+          "description": "Pesto, burrata cheese & Parma ham.",
+          "item_id": "bruschetta--prosciutto",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9.25,
+                "amount_minor": 925,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/4/items/2/price",
+                  "raw_text": "£9.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Meze & antipasti",
+      "items": [
+        {
+          "name": "Hummus & Pitta",
+          "price": "£5.95",
+          "dietary": [
+            "vegan"
+          ],
+          "description": null,
+          "item_id": "meze-antipasti--hummus-pitta",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/0/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Halloumi & Sweet Chilli",
+          "price": "£6.75",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": null,
+          "item_id": "meze-antipasti--halloumi-sweet-chilli",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 6.75,
+                "amount_minor": 675,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/1/price",
+                  "raw_text": "£6.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Sigara Börek",
+          "price": "£6.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Deep-fried filo pastry with feta & parsley. Served with garlic mayo.",
+          "item_id": "meze-antipasti--sigara-borek",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/2/price",
+                  "raw_text": "£6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Falafel & Hummus",
+          "price": "£9.25",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Deep-fried chickpea balls & hummus. Served with salad & pitta.",
+          "item_id": "meze-antipasti--falafel-hummus",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9.25,
+                "amount_minor": 925,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/3/price",
+                  "raw_text": "£9.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Arancini Bites",
+          "price": "£8.75",
+          "dietary": [],
+          "description": "Sicilian fried rice balls filled with ragù, peas & mozzarella. Served with a spicy tomato sauce.",
+          "item_id": "meze-antipasti--arancini-bites",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 8.75,
+                "amount_minor": 875,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/4/price",
+                  "raw_text": "£8.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Caponata",
+          "price": "£9.95",
+          "dietary": [
+            "vegan"
+          ],
+          "description": "Slow-cooked aubergine in a rich tomato sauce with celery, onion, olives, capers & pine nuts. Served with sourdough.",
+          "item_id": "meze-antipasti--caponata",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9.95,
+                "amount_minor": 995,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/5/price",
+                  "raw_text": "£9.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Calamari Fritti",
+          "price": "£9.25",
+          "dietary": [],
+          "description": "Salt & pepper crispy fried squid with tartare sauce & lemon. Large £11.95.",
+          "item_id": "meze-antipasti--calamari-fritti",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9.25,
+                "amount_minor": 925,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/6/price",
+                  "raw_text": "£9.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Salt & pepper crispy fried squid with tartare sauce & lemon. Large £11.95.",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 11.95,
+                "amount_minor": 1195,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/5/items/6/description",
+                  "raw_text": "Large £11.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/5/items/6/description",
+                  "raw_text": "Large £11.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Gamberoni Fritti",
+          "price": "£11.95",
+          "dietary": [],
+          "description": "Tempura king prawns served with garlic mayonnaise.",
+          "item_id": "meze-antipasti--gamberoni-fritti",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.95,
+                "amount_minor": 1195,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/5/items/7/price",
+                  "raw_text": "£11.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Sharing platters",
+      "items": [
+        {
+          "name": "Turkish Meze",
+          "price": "£13.95",
+          "dietary": [],
+          "description": "Hummus, fried feta pastry, Turkish sausage, feta, falafel, olives, tomato & cucumber. Served with pitta. For two £23.95.",
+          "item_id": "sharing-platters--turkish-meze",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£13.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 13.95,
+                "amount_minor": 1395,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/6/items/0/price",
+                  "raw_text": "£13.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Hummus, fried feta pastry, Turkish sausage, feta, falafel, olives, tomato & cucumber. Served with pitta. For two £23.95.",
+            "options": [
+              {
+                "kind": "bundle",
+                "amount": 23.95,
+                "amount_minor": 2395,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/6/items/0/description",
+                  "raw_text": "For two £23.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/6/items/0/description",
+                  "raw_text": "For two £23.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Vegetarian Platter",
+          "price": "£13.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Feta, halloumi, hummus, falafel, crispy feta pastry, bruschetta classica, tomato & cucumber. Served with pitta. For two £23.95.",
+          "item_id": "sharing-platters--vegetarian-platter",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£13.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 13.95,
+                "amount_minor": 1395,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/6/items/1/price",
+                  "raw_text": "£13.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Feta, halloumi, hummus, falafel, crispy feta pastry, bruschetta classica, tomato & cucumber. Served with pitta. For two £23.95.",
+            "options": [
+              {
+                "kind": "bundle",
+                "amount": 23.95,
+                "amount_minor": 2395,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/6/items/1/description",
+                  "raw_text": "For two £23.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/6/items/1/description",
+                  "raw_text": "For two £23.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Italian Antipasto",
+          "price": "£28.95",
+          "dietary": [],
+          "description": "Italian cured meats, cheeses, whole burrata, arancini, two bruschetta classica, olives, sundried tomatoes & pesto dip. Served with focaccia. For two to share.",
+          "item_id": "sharing-platters--italian-antipasto",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£28.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 28.95,
+                "amount_minor": 2895,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/6/items/2/price",
+                  "raw_text": "£28.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Salads",
+      "items": [
+        {
+          "name": "Burrata Salad",
+          "price": "£11.95",
+          "dietary": [],
+          "description": "Whole Pugliese burrata with 24-month Parma ham, rocket, cherry tomatoes, olive oil & Modena balsamic glaze.",
+          "item_id": "salads--burrata-salad",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.95,
+                "amount_minor": 1195,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/7/items/0/price",
+                  "raw_text": "£11.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Mediterranean Salad",
+          "price": "£8.95",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Mixed leaves, tomato, cucumber, feta, red onion & olives. Add chicken £3.95.",
+          "item_id": "salads--mediterranean-salad",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 8.95,
+                "amount_minor": 895,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/7/items/1/price",
+                  "raw_text": "£8.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Mixed leaves, tomato, cucumber, feta, red onion & olives. Add chicken £3.95.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 3.95,
+                "amount_minor": 395,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "chicken"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/7/items/1/description",
+                  "raw_text": "Add chicken £3.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/7/items/1/description",
+                  "raw_text": "Add chicken £3.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Avocado & Salmon",
+          "price": "£11.25",
+          "dietary": [],
+          "description": "Smoked salmon, avocado, rocket, cucumber, cherry tomatoes, red onion & balsamic glaze.",
+          "item_id": "salads--avocado-salmon",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£11.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 11.25,
+                "amount_minor": 1125,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/7/items/2/price",
+                  "raw_text": "£11.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Signature mains",
+      "items": [
+        {
+          "name": "Chicken Shish",
+          "price": "£17.95",
+          "dietary": [],
+          "description": "Traditional Turkish marinated chicken served with salad, house fries & garlic mayonnaise. Add side salad, hummus & tortilla crisps +£3.95.",
+          "item_id": "signature-mains--chicken-shish",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£17.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 17.95,
+                "amount_minor": 1795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/8/items/0/price",
+                  "raw_text": "£17.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Traditional Turkish marinated chicken served with salad, house fries & garlic mayonnaise. Add side salad, hummus & tortilla crisps +£3.95.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 3.95,
+                "amount_minor": 395,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "side salad, hummus & tortilla crisps"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/8/items/0/description",
+                  "raw_text": "Add side salad, hummus & tortilla crisps +£3.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/8/items/0/description",
+                  "raw_text": "Add side salad, hummus & tortilla crisps +£3.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Frittura Portofino",
+          "price": "£19.95",
+          "dietary": [],
+          "description": "Calamari, scampi, tempura king prawns & whitebait with crispy zucchini & carrot julienne, sweet chilli sauce, tartare sauce & side salad.",
+          "item_id": "signature-mains--frittura-portofino",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£19.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 19.95,
+                "amount_minor": 1995,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/8/items/1/price",
+                  "raw_text": "£19.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Eggplant Parmigiana",
+          "price": "£16.25",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": "Layers of fried aubergine, tomato sauce, mozzarella & parmesan, oven-baked. Served with sourdough.",
+          "item_id": "signature-mains--eggplant-parmigiana",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£16.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 16.25,
+                "amount_minor": 1625,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/8/items/2/price",
+                  "raw_text": "£16.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Panini · Focaccia · Baguette",
+      "items": [
+        {
+          "name": "Ham & Cheese",
+          "price": "£5.45",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--ham-cheese",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.45",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.45,
+                "amount_minor": 545,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/0/price",
+                  "raw_text": "£5.45"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Mozzarella, Tomato & Pesto",
+          "price": "£5.75",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--mozzarella-tomato-pesto",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.75,
+                "amount_minor": 575,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/1/price",
+                  "raw_text": "£5.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Hummus & Grilled Veg",
+          "price": "£5.75",
+          "dietary": [
+            "vegan"
+          ],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--hummus-grilled-veg",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.75,
+                "amount_minor": 575,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/2/price",
+                  "raw_text": "£5.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Brie & Cranberry",
+          "price": "£5.25",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--brie-cranberry",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.25,
+                "amount_minor": 525,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/3/price",
+                  "raw_text": "£5.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Avocado, Grilled Veg & Brie",
+          "price": "£5.75",
+          "dietary": [
+            "vegetarian"
+          ],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--avocado-grilled-veg-brie",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.75,
+                "amount_minor": 575,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/4/price",
+                  "raw_text": "£5.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Parma Ham, Brie & Rocket",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--parma-ham-brie-rocket",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/5/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Salame, Mozzarella & Rocket",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--salame-mozzarella-rocket",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/6/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "BLT",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--blt",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/7/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Tuna, Mayo & Tomato",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--tuna-mayo-tomato",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/8/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Smoked Salmon, Rocket & Brie",
+          "price": "£6.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "panini-focaccia-baguette--smoked-salmon-rocket-brie",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 6.75,
+                "amount_minor": 675,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/9/items/9/price",
+                  "raw_text": "£6.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Caffetteria",
+      "items": [
+        {
+          "name": "Espresso / Doppio",
+          "price": "£2.45 / £2.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--espresso-doppio",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.45 / £2.75",
+            "options": [
+              {
+                "kind": "variant",
+                "amount": 2.45,
+                "amount_minor": 245,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "Espresso"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/0/price",
+                  "raw_text": "£2.45"
+                },
+                "qualifier_evidence": {
+                  "source": "item_name",
+                  "source_path": "/menu/10/items/0/name",
+                  "raw_text": "Espresso / Doppio"
+                }
+              },
+              {
+                "kind": "variant",
+                "amount": 2.75,
+                "amount_minor": 275,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "Doppio"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/0/price",
+                  "raw_text": "£2.75"
+                },
+                "qualifier_evidence": {
+                  "source": "item_name",
+                  "source_path": "/menu/10/items/0/name",
+                  "raw_text": "Espresso / Doppio"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Espresso Macchiato",
+          "price": "£2.65",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--espresso-macchiato",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.65",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.65,
+                "amount_minor": 265,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/1/price",
+                  "raw_text": "£2.65"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Espresso con Panna",
+          "price": "£2.65",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--espresso-con-panna",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.65",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.65,
+                "amount_minor": 265,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/2/price",
+                  "raw_text": "£2.65"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Cortado",
+          "price": "£3.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--cortado",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.25,
+                "amount_minor": 325,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/3/price",
+                  "raw_text": "£3.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Americano",
+          "price": "£3.40",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--americano",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.40",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.4,
+                "amount_minor": 340,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/4/price",
+                  "raw_text": "£3.40"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Cappuccino",
+          "price": "£3.55",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--cappuccino",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.55",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.55,
+                "amount_minor": 355,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/5/price",
+                  "raw_text": "£3.55"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Latte",
+          "price": "£3.55",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.55",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.55,
+                "amount_minor": 355,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/6/price",
+                  "raw_text": "£3.55"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Flat White",
+          "price": "£3.60",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--flat-white",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.60",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.6,
+                "amount_minor": 360,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/7/price",
+                  "raw_text": "£3.60"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Mocha",
+          "price": "£3.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--mocha",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.75,
+                "amount_minor": 375,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/8/price",
+                  "raw_text": "£3.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Turkish Coffee",
+          "price": "£3.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "caffetteria--turkish-coffee",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.25,
+                "amount_minor": 325,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/10/items/9/price",
+                  "raw_text": "£3.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "extras": {
+        "alternative_milk": "+30p",
+        "extra_shot": "+60p",
+        "syrup": "+50p",
+        "decaf": "available"
+      },
+      "normalized_extras": {
+        "pricing_options": [
+          {
+            "kind": "surcharge",
+            "amount": 0.3,
+            "amount_minor": 30,
+            "pricing_effect": "surcharge",
+            "qualifiers": {
+              "variant": "alternative_milk"
+            },
+            "evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/alternative_milk",
+              "raw_text": "alternative_milk: +30p"
+            },
+            "qualifier_evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/alternative_milk",
+              "raw_text": "alternative_milk: +30p"
+            }
+          },
+          {
+            "kind": "surcharge",
+            "amount": 0.6,
+            "amount_minor": 60,
+            "pricing_effect": "surcharge",
+            "qualifiers": {
+              "variant": "extra_shot"
+            },
+            "evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/extra_shot",
+              "raw_text": "extra_shot: +60p"
+            },
+            "qualifier_evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/extra_shot",
+              "raw_text": "extra_shot: +60p"
+            }
+          },
+          {
+            "kind": "surcharge",
+            "amount": 0.5,
+            "amount_minor": 50,
+            "pricing_effect": "surcharge",
+            "qualifiers": {
+              "variant": "syrup"
+            },
+            "evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/syrup",
+              "raw_text": "syrup: +50p"
+            },
+            "qualifier_evidence": {
+              "source": "section_extras",
+              "source_path": "/menu/10/extras/syrup",
+              "raw_text": "syrup: +50p"
+            }
+          }
+        ],
+        "non_monetary": {
+          "decaf": "available"
+        }
+      }
+    },
+    {
+      "section": "Speciali",
+      "items": [
+        {
+          "name": "Chai Latte",
+          "price": "£3.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "speciali--chai-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.75,
+                "amount_minor": 375,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/11/items/0/price",
+                  "raw_text": "£3.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Turmeric Latte",
+          "price": "£3.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "speciali--turmeric-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.75,
+                "amount_minor": 375,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/11/items/1/price",
+                  "raw_text": "£3.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Matcha Latte",
+          "price": "£3.75",
+          "dietary": [],
+          "description": null,
+          "item_id": "speciali--matcha-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.75,
+                "amount_minor": 375,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/11/items/2/price",
+                  "raw_text": "£3.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Dirty Chai Latte",
+          "price": "£4.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "speciali--dirty-chai-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.25,
+                "amount_minor": 425,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/11/items/3/price",
+                  "raw_text": "£4.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Hot chocolate & tea",
+      "items": [
+        {
+          "name": "Hot Chocolate",
+          "price": "£3.55",
+          "dietary": [],
+          "description": null,
+          "item_id": "hot-chocolate-tea--hot-chocolate",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.55",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.55,
+                "amount_minor": 355,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/12/items/0/price",
+                  "raw_text": "£3.55"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Italian Hot Chocolate",
+          "price": "£4.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "hot-chocolate-tea--italian-hot-chocolate",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.25,
+                "amount_minor": 425,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/12/items/1/price",
+                  "raw_text": "£4.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Chai Hot Chocolate",
+          "price": "£4.45",
+          "dietary": [],
+          "description": null,
+          "item_id": "hot-chocolate-tea--chai-hot-chocolate",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.45",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.45,
+                "amount_minor": 445,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/12/items/2/price",
+                  "raw_text": "£4.45"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "English Breakfast / Herbal Tea",
+          "price": "£2.65",
+          "dietary": [],
+          "description": null,
+          "item_id": "hot-chocolate-tea--english-breakfast-herbal-tea",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.65",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.65,
+                "amount_minor": 265,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/12/items/3/price",
+                  "raw_text": "£2.65"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Turkish Tea",
+          "price": "£2.20",
+          "dietary": [],
+          "description": null,
+          "item_id": "hot-chocolate-tea--turkish-tea",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.20",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.2,
+                "amount_minor": 220,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/12/items/4/price",
+                  "raw_text": "£2.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Italian favourites",
+      "items": [
+        {
+          "name": "Pistachio Macchiato",
+          "price": "£4.95",
+          "dietary": [],
+          "description": "Pistachio cream, steamed milk, whipped cream & crushed pistachios.",
+          "item_id": "italian-favourites--pistachio-macchiato",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/13/items/0/price",
+                  "raw_text": "£4.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Bicerin",
+          "price": "£4.95",
+          "dietary": [],
+          "description": "Turin coffee: double espresso, rich hot chocolate & whipped cream.",
+          "item_id": "italian-favourites--bicerin",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/13/items/1/price",
+                  "raw_text": "£4.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Affogato",
+          "price": "£5.95",
+          "dietary": [],
+          "description": "Vanilla artisan gelato & a double espresso shot.",
+          "item_id": "italian-favourites--affogato",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/13/items/2/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Iced drinks",
+      "items": [
+        {
+          "name": "Iced Americano",
+          "price": "£3.90 / £4.20",
+          "dietary": [],
+          "description": null,
+          "item_id": "iced-drinks--iced-americano",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.90 / £4.20",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 3.9,
+                "amount_minor": 390,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/0/price",
+                  "raw_text": "£3.90"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 4.2,
+                "amount_minor": 420,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/0/price",
+                  "raw_text": "£4.20"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Iced Latte",
+          "price": "£4.10 / £4.60",
+          "dietary": [],
+          "description": null,
+          "item_id": "iced-drinks--iced-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.10 / £4.60",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 4.1,
+                "amount_minor": 410,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/1/price",
+                  "raw_text": "£4.10"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 4.6,
+                "amount_minor": 460,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/1/price",
+                  "raw_text": "£4.60"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Iced Matcha",
+          "price": "£4.55 / £5.45",
+          "dietary": [],
+          "description": null,
+          "item_id": "iced-drinks--iced-matcha",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.55 / £5.45",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 4.55,
+                "amount_minor": 455,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/2/price",
+                  "raw_text": "£4.55"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 5.45,
+                "amount_minor": 545,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/2/price",
+                  "raw_text": "£5.45"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Iced Chai Latte",
+          "price": "£4.95 / £5.65",
+          "dietary": [],
+          "description": null,
+          "item_id": "iced-drinks--iced-chai-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95 / £5.65",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/3/price",
+                  "raw_text": "£4.95"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/3/price",
+                  "raw_text": "£5.65"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Iced Pistachio Latte",
+          "price": "£4.95 / £5.65",
+          "dietary": [],
+          "description": null,
+          "item_id": "iced-drinks--iced-pistachio-latte",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95 / £5.65",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/4/price",
+                  "raw_text": "£4.95"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/4/price",
+                  "raw_text": "£5.65"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Espresso Sunrise",
+          "price": "£5.25 / £5.95",
+          "dietary": [],
+          "description": "Fresh orange juice & espresso.",
+          "item_id": "iced-drinks--espresso-sunrise",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.25 / £5.95",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 5.25,
+                "amount_minor": 525,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/5/price",
+                  "raw_text": "£5.25"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/0",
+                  "raw_text": "regular"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/14/items/5/price",
+                  "raw_text": "£5.95"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/14/price_order/1",
+                  "raw_text": "large"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "price_order": [
+        "regular",
+        "large"
+      ],
+      "site_heading": "Iced drinks reg / large"
+    },
+    {
+      "section": "Cannoli, cakes & pastries",
+      "items": [
+        {
+          "name": "Fresh Filled Sicilian Cannoli",
+          "price": "£2.95",
+          "dietary": [],
+          "description": "Pistachio, Biscoff or choco chips. 2 for £5 · 3 for £7. Gluten-free £2.25.",
+          "item_id": "cannoli-cakes-pastries--fresh-filled-sicilian-cannoli",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.95,
+                "amount_minor": 295,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/0/price",
+                  "raw_text": "£2.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Pistachio, Biscoff or choco chips. 2 for £5 · 3 for £7. Gluten-free £2.25.",
+            "options": [
+              {
+                "kind": "bundle",
+                "amount": 5,
+                "amount_minor": 500,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "2 for £5"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "2 for £5"
+                }
+              },
+              {
+                "kind": "bundle",
+                "amount": 7,
+                "amount_minor": 700,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 3
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "3 for £7"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "3 for £7"
+                }
+              },
+              {
+                "kind": "variant",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "gluten-free"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "Gluten-free £2.25"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/0/description",
+                  "raw_text": "Gluten-free £2.25"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Aragostine",
+          "price": "£1.85",
+          "dietary": [],
+          "description": "Hazelnut, pistachio or lemon. 3 for £5.95.",
+          "item_id": "cannoli-cakes-pastries--aragostine",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£1.85",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 1.85,
+                "amount_minor": 185,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/1/price",
+                  "raw_text": "£1.85"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Hazelnut, pistachio or lemon. 3 for £5.95.",
+            "options": [
+              {
+                "kind": "bundle",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 3
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/1/description",
+                  "raw_text": "3 for £5.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/1/description",
+                  "raw_text": "3 for £5.95"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Tiramisu",
+          "price": "£4.25",
+          "dietary": [],
+          "description": "Mascarpone, coffee & ladyfinger biscuits.",
+          "item_id": "cannoli-cakes-pastries--tiramisu",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.25,
+                "amount_minor": 425,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/2/price",
+                  "raw_text": "£4.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Torta della Nonna",
+          "price": "£3.75",
+          "dietary": [],
+          "description": "Custard tart with pine nuts.",
+          "item_id": "cannoli-cakes-pastries--torta-della-nonna",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.75",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.75,
+                "amount_minor": 375,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/3/price",
+                  "raw_text": "£3.75"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Traditional Baklava",
+          "price": "£3.45",
+          "dietary": [],
+          "description": "Turkish pastry with pistachio · 2 pcs.",
+          "item_id": "cannoli-cakes-pastries--traditional-baklava",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.45",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.45,
+                "amount_minor": 345,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/4/price",
+                  "raw_text": "£3.45"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Butter Croissant",
+          "price": "£2.25",
+          "dietary": [],
+          "description": "With butter & jam. Filled (pistachio / Nutella) £2.95.",
+          "item_id": "cannoli-cakes-pastries--butter-croissant",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.25,
+                "amount_minor": 225,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/15/items/5/price",
+                  "raw_text": "£2.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "With butter & jam. Filled (pistachio / Nutella) £2.95.",
+            "options": [
+              {
+                "kind": "variant",
+                "amount": 2.95,
+                "amount_minor": 295,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "filled (pistachio / Nutella)"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/5/description",
+                  "raw_text": "Filled (pistachio / Nutella) £2.95"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/15/items/5/description",
+                  "raw_text": "Filled (pistachio / Nutella) £2.95"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "section": "Gelato & sorbet",
+      "items": [
+        {
+          "name": "Classic",
+          "price": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+          "dietary": [],
+          "description": null,
+          "options": [
+            "Vanilla",
+            "Chocolate",
+            "Strawberry",
+            "Pistachio"
+          ],
+          "item_id": "gelato-sorbet--classic",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+            "options": [
+              {
+                "kind": "quantity",
+                "amount": 3.9,
+                "amount_minor": 390,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 1,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/0/price",
+                  "raw_text": "1 scoop £3.90"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 5.2,
+                "amount_minor": 520,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/0/price",
+                  "raw_text": "2 scoops £5.20"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 6.2,
+                "amount_minor": 620,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 3,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/0/price",
+                  "raw_text": "3 scoops £6.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Special",
+          "price": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+          "dietary": [],
+          "description": null,
+          "options": [
+            "Raspberry Ripple",
+            "Stracciatella",
+            "Cherry Amarena",
+            "Ferrero Rocher"
+          ],
+          "item_id": "gelato-sorbet--special",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+            "options": [
+              {
+                "kind": "quantity",
+                "amount": 3.9,
+                "amount_minor": 390,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 1,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/1/price",
+                  "raw_text": "1 scoop £3.90"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 5.2,
+                "amount_minor": 520,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/1/price",
+                  "raw_text": "2 scoops £5.20"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 6.2,
+                "amount_minor": 620,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 3,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/1/price",
+                  "raw_text": "3 scoops £6.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Sorbet",
+          "price": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+          "dietary": [
+            "vegan"
+          ],
+          "description": null,
+          "options": [
+            "Raspberry",
+            "Blood Orange",
+            "Lemon",
+            "Wild Cherry"
+          ],
+          "item_id": "gelato-sorbet--sorbet",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
+            "options": [
+              {
+                "kind": "quantity",
+                "amount": 3.9,
+                "amount_minor": 390,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 1,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/2/price",
+                  "raw_text": "1 scoop £3.90"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 5.2,
+                "amount_minor": 520,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 2,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/2/price",
+                  "raw_text": "2 scoops £5.20"
+                }
+              },
+              {
+                "kind": "quantity",
+                "amount": 6.2,
+                "amount_minor": 620,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "quantity": 3,
+                  "unit": "scoop"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/16/items/2/price",
+                  "raw_text": "3 scoops £6.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "pricing": {
+        "1_scoop": "£3.90",
+        "2_scoops": "£5.20",
+        "3_scoops": "£6.20"
+      },
+      "note": "Authentic Italian artisan gelato, handmade daily in small batches using fresh British milk & cream. Flavours change daily — ask about today's specials.",
+      "site_heading": "Gelato & sorbet 1 · £3.90 / 2 · £5.20 / 3 · £6.20",
+      "normalized_pricing": {
+        "currency": "GBP",
+        "options": [
+          {
+            "kind": "quantity",
+            "amount": 3.9,
+            "amount_minor": 390,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "quantity": 1,
+              "unit": "scoop"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/1_scoop",
+              "raw_text": "1_scoop: £3.90"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/1_scoop",
+              "raw_text": "1_scoop: £3.90"
+            }
+          },
+          {
+            "kind": "quantity",
+            "amount": 5.2,
+            "amount_minor": 520,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "quantity": 2,
+              "unit": "scoop"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/2_scoops",
+              "raw_text": "2_scoops: £5.20"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/2_scoops",
+              "raw_text": "2_scoops: £5.20"
+            }
+          },
+          {
+            "kind": "quantity",
+            "amount": 6.2,
+            "amount_minor": 620,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "quantity": 3,
+              "unit": "scoop"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/3_scoops",
+              "raw_text": "3_scoops: £6.20"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/16/pricing/3_scoops",
+              "raw_text": "3_scoops: £6.20"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "section": "Make it yours",
+      "items": [
+        {
+          "name": "Sprinkles & inclusions",
+          "price": "+£0.50",
+          "dietary": [],
+          "description": "Sprinkles, cookie crumble, choco chips or chopped pistachio.",
+          "item_id": "make-it-yours--sprinkles-inclusions",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£0.50",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 0.5,
+                "amount_minor": 50,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/17/items/0/price",
+                  "raw_text": "+£0.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Sauces",
+          "price": "+£0.50",
+          "dietary": [],
+          "description": "Caramel, strawberry, raspberry, pistachio or chocolate.",
+          "item_id": "make-it-yours--sauces",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£0.50",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 0.5,
+                "amount_minor": 50,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/17/items/1/price",
+                  "raw_text": "+£0.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Fabbri Cherry Amarena",
+          "price": "+£1.80",
+          "dietary": [],
+          "description": "Cherry & syrup.",
+          "item_id": "make-it-yours--fabbri-cherry-amarena",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£1.80",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 1.8,
+                "amount_minor": 180,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/17/items/2/price",
+                  "raw_text": "+£1.80"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Special cones",
+          "price": "+£0.50",
+          "dietary": [],
+          "description": "Waffle cone +£0.50 · dipped cone +£0.90.",
+          "item_id": "make-it-yours--special-cones",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£0.50",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 0.5,
+                "amount_minor": 50,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/17/items/3/price",
+                  "raw_text": "+£0.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": {
+            "currency": "GBP",
+            "raw_description": "Waffle cone +£0.50 · dipped cone +£0.90.",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 0.5,
+                "amount_minor": 50,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "waffle cone"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/17/items/3/description",
+                  "raw_text": "Waffle cone +£0.50"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/17/items/3/description",
+                  "raw_text": "Waffle cone +£0.50"
+                }
+              },
+              {
+                "kind": "surcharge",
+                "amount": 0.9,
+                "amount_minor": 90,
+                "pricing_effect": "surcharge",
+                "qualifiers": {
+                  "variant": "dipped cone"
+                },
+                "evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/17/items/3/description",
+                  "raw_text": "dipped cone +£0.90"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/17/items/3/description",
+                  "raw_text": "dipped cone +£0.90"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Whipped cream / wafer biscuits",
+          "price": "+£0.60",
+          "dietary": [],
+          "description": null,
+          "item_id": "make-it-yours--whipped-cream-wafer-biscuits",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£0.60",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 0.6,
+                "amount_minor": 60,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/17/items/4/price",
+                  "raw_text": "+£0.60"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Sundaes",
+      "items": [
+        {
+          "name": "Chocolate",
+          "price": "£8.90 eat in / £7.60 takeaway",
+          "dietary": [],
+          "description": "Vanilla & chocolate gelato, chocolate sauce & whipped cream.",
+          "item_id": "sundaes--chocolate",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.90 eat in / £7.60 takeaway",
+            "options": [
+              {
+                "kind": "service_mode",
+                "amount": 8.9,
+                "amount_minor": 890,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "eat in"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/0/price",
+                  "raw_text": "£8.90 eat in"
+                }
+              },
+              {
+                "kind": "service_mode",
+                "amount": 7.6,
+                "amount_minor": 760,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "takeaway"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/0/price",
+                  "raw_text": "£7.60 takeaway"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Strawberry",
+          "price": "£8.90 eat in / £7.60 takeaway",
+          "dietary": [],
+          "description": "Strawberry sorbet, vanilla gelato, fresh strawberries, whipped cream & pistachios.",
+          "item_id": "sundaes--strawberry",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.90 eat in / £7.60 takeaway",
+            "options": [
+              {
+                "kind": "service_mode",
+                "amount": 8.9,
+                "amount_minor": 890,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "eat in"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/1/price",
+                  "raw_text": "£8.90 eat in"
+                }
+              },
+              {
+                "kind": "service_mode",
+                "amount": 7.6,
+                "amount_minor": 760,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "takeaway"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/1/price",
+                  "raw_text": "£7.60 takeaway"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Cheesecake",
+          "price": "£8.90 eat in / £7.60 takeaway",
+          "dietary": [],
+          "description": "Cheesecake gelato with your choice of sauce, biscuit crumble & whipped cream.",
+          "item_id": "sundaes--cheesecake",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.90 eat in / £7.60 takeaway",
+            "options": [
+              {
+                "kind": "service_mode",
+                "amount": 8.9,
+                "amount_minor": 890,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "eat in"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/2/price",
+                  "raw_text": "£8.90 eat in"
+                }
+              },
+              {
+                "kind": "service_mode",
+                "amount": 7.6,
+                "amount_minor": 760,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "takeaway"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/2/price",
+                  "raw_text": "£7.60 takeaway"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Affogato",
+          "price": "£8.90 eat in / £7.60 takeaway",
+          "dietary": [],
+          "description": "Three scoops of gelato, two espresso shots & wafer biscuits.",
+          "item_id": "sundaes--affogato",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£8.90 eat in / £7.60 takeaway",
+            "options": [
+              {
+                "kind": "service_mode",
+                "amount": 8.9,
+                "amount_minor": 890,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "eat in"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/3/price",
+                  "raw_text": "£8.90 eat in"
+                }
+              },
+              {
+                "kind": "service_mode",
+                "amount": 7.6,
+                "amount_minor": 760,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "takeaway"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/18/items/3/price",
+                  "raw_text": "£7.60 takeaway"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "pricing": {
+        "eat_in": "£8.90",
+        "takeaway": "£7.60"
+      },
+      "site_heading": "Sundaes £8.90 in / £7.60 takeaway",
+      "normalized_pricing": {
+        "currency": "GBP",
+        "options": [
+          {
+            "kind": "service_mode",
+            "amount": 8.9,
+            "amount_minor": 890,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "service_mode": "eat in"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/18/pricing/eat_in",
+              "raw_text": "eat_in: £8.90"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/18/pricing/eat_in",
+              "raw_text": "eat_in: £8.90"
+            }
+          },
+          {
+            "kind": "service_mode",
+            "amount": 7.6,
+            "amount_minor": 760,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "service_mode": "takeaway"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/18/pricing/takeaway",
+              "raw_text": "takeaway: £7.60"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/18/pricing/takeaway",
+              "raw_text": "takeaway: £7.60"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "section": "Treats",
+      "items": [
+        {
+          "name": "Gelato Croissant",
+          "price": "£7.20",
+          "dietary": [],
+          "description": "Warm croissant with two scoops, sauce & sprinkles included.",
+          "item_id": "treats--gelato-croissant",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.20",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.2,
+                "amount_minor": 720,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/19/items/0/price",
+                  "raw_text": "£7.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Milkshakes",
+          "price": "£6.50 / £5.85",
+          "dietary": [],
+          "description": "Any gelato flavour. Eat in / takeaway.",
+          "item_id": "treats--milkshakes",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.50 / £5.85",
+            "options": [
+              {
+                "kind": "service_mode",
+                "amount": 6.5,
+                "amount_minor": 650,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "eat in"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/19/items/1/price",
+                  "raw_text": "£6.50"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/19/items/1/description",
+                  "raw_text": "Eat in / takeaway"
+                }
+              },
+              {
+                "kind": "service_mode",
+                "amount": 5.85,
+                "amount_minor": 585,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "service_mode": "takeaway"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/19/items/1/price",
+                  "raw_text": "£5.85"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/19/items/1/description",
+                  "raw_text": "Eat in / takeaway"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Add gelato to any cake",
+          "price": "+£3.20",
+          "dietary": [],
+          "description": "Choose any flavour.",
+          "item_id": "treats--add-gelato-to-any-cake",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "+£3.20",
+            "options": [
+              {
+                "kind": "surcharge",
+                "amount": 3.2,
+                "amount_minor": 320,
+                "pricing_effect": "surcharge",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/19/items/2/price",
+                  "raw_text": "+£3.20"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Wine",
+      "items": [
+        {
+          "name": "Pinot Grigio DOC",
+          "price": "£5 / £7 / £25",
+          "dietary": [],
+          "description": "Veneto, Italy. Fresh, crisp & citrusy.",
+          "item_id": "wine--pinot-grigio-doc",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5 / £7 / £25",
+            "options": [
+              {
+                "kind": "volume",
+                "amount": 5,
+                "amount_minor": 500,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 125
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/0/price",
+                  "raw_text": "£5"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/0",
+                  "raw_text": "125ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 7,
+                "amount_minor": 700,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 175
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/0/price",
+                  "raw_text": "£7"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/1",
+                  "raw_text": "175ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 25,
+                "amount_minor": 2500,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "bottle"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/0/price",
+                  "raw_text": "£25"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/2",
+                  "raw_text": "bottle"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Chardonnay IGT",
+          "price": "£6 / £8 / £28",
+          "dietary": [],
+          "description": "Veneto, Italy. Soft tropical fruit, smooth finish.",
+          "item_id": "wine--chardonnay-igt",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6 / £8 / £28",
+            "options": [
+              {
+                "kind": "volume",
+                "amount": 6,
+                "amount_minor": 600,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 125
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/1/price",
+                  "raw_text": "£6"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/0",
+                  "raw_text": "125ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 8,
+                "amount_minor": 800,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 175
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/1/price",
+                  "raw_text": "£8"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/1",
+                  "raw_text": "175ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 28,
+                "amount_minor": 2800,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "bottle"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/1/price",
+                  "raw_text": "£28"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/2",
+                  "raw_text": "bottle"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Sangiovese IGT",
+          "price": "£7 / £9 / £35",
+          "dietary": [],
+          "description": "Puglia, Italy. Medium-bodied, red berry notes.",
+          "item_id": "wine--sangiovese-igt",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7 / £9 / £35",
+            "options": [
+              {
+                "kind": "volume",
+                "amount": 7,
+                "amount_minor": 700,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 125
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/2/price",
+                  "raw_text": "£7"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/0",
+                  "raw_text": "125ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 9,
+                "amount_minor": 900,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "volume_ml": 175
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/2/price",
+                  "raw_text": "£9"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/1",
+                  "raw_text": "175ml"
+                }
+              },
+              {
+                "kind": "volume",
+                "amount": 35,
+                "amount_minor": 3500,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "bottle"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/20/items/2/price",
+                  "raw_text": "£35"
+                },
+                "qualifier_evidence": {
+                  "source": "section_price_order",
+                  "source_path": "/menu/20/price_order/2",
+                  "raw_text": "bottle"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "price_order": [
+        "125ml",
+        "175ml",
+        "bottle"
+      ],
+      "mini_bottles": {
+        "Pinot Grigio": "£6.95",
+        "Merlot": "£7.50",
+        "Prosecco": "£8.50"
+      },
+      "site_heading": "Wine 125ml / 175ml / bottle",
+      "normalized_mini_bottles": {
+        "currency": "GBP",
+        "options": [
+          {
+            "kind": "variant",
+            "amount": 6.95,
+            "amount_minor": 695,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "variant": "Pinot Grigio"
+            },
+            "evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Pinot Grigio",
+              "raw_text": "Pinot Grigio: £6.95"
+            },
+            "qualifier_evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Pinot Grigio",
+              "raw_text": "Pinot Grigio: £6.95"
+            }
+          },
+          {
+            "kind": "variant",
+            "amount": 7.5,
+            "amount_minor": 750,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "variant": "Merlot"
+            },
+            "evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Merlot",
+              "raw_text": "Merlot: £7.50"
+            },
+            "qualifier_evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Merlot",
+              "raw_text": "Merlot: £7.50"
+            }
+          },
+          {
+            "kind": "variant",
+            "amount": 8.5,
+            "amount_minor": 850,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "variant": "Prosecco"
+            },
+            "evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Prosecco",
+              "raw_text": "Prosecco: £8.50"
+            },
+            "qualifier_evidence": {
+              "source": "section_mini_bottles",
+              "source_path": "/menu/20/mini_bottles/Prosecco",
+              "raw_text": "Prosecco: £8.50"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "section": "Beer & cider",
+      "items": [
+        {
+          "name": "Birra Moretti",
+          "price": "£5.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "beer-cider--birra-moretti",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.25,
+                "amount_minor": 525,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/21/items/0/price",
+                  "raw_text": "£5.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Efes Draft",
+          "price": "£5.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "beer-cider--efes-draft",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£5.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 5.95,
+                "amount_minor": 595,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/21/items/1/price",
+                  "raw_text": "£5.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Nastro Azzurro / Corona",
+          "price": "£4.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "beer-cider--nastro-azzurro-corona",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/21/items/2/price",
+                  "raw_text": "£4.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Peroni 0.0",
+          "price": "£4.50",
+          "dietary": [],
+          "description": "0% alcohol.",
+          "item_id": "beer-cider--peroni-0-0",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.50",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.5,
+                "amount_minor": 450,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/21/items/3/price",
+                  "raw_text": "£4.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Rekorderlig Cider",
+          "price": "£4.95",
+          "dietary": [],
+          "description": null,
+          "item_id": "beer-cider--rekorderlig-cider",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/21/items/4/price",
+                  "raw_text": "£4.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Smoothies",
+      "items": [
+        {
+          "name": "Green",
+          "price": "regular £5.65 / large £6.95",
+          "dietary": [],
+          "description": "Spinach, banana, apple & ginger.",
+          "item_id": "smoothies--green",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "regular £5.65 / large £6.95",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/0/price",
+                  "raw_text": "regular £5.65"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/0/price",
+                  "raw_text": "large £6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Tropical",
+          "price": "regular £5.65 / large £6.95",
+          "dietary": [],
+          "description": "Pineapple, mango, banana & orange juice.",
+          "item_id": "smoothies--tropical",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "regular £5.65 / large £6.95",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/1/price",
+                  "raw_text": "regular £5.65"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/1/price",
+                  "raw_text": "large £6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Pina Colada",
+          "price": "regular £5.65 / large £6.95",
+          "dietary": [],
+          "description": "Pineapple, banana & coconut milk.",
+          "item_id": "smoothies--pina-colada",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "regular £5.65 / large £6.95",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/2/price",
+                  "raw_text": "regular £5.65"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/2/price",
+                  "raw_text": "large £6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Berries Bliss",
+          "price": "regular £5.65 / large £6.95",
+          "dietary": [],
+          "description": "Mixed berries, banana, yoghurt & honey.",
+          "item_id": "smoothies--berries-bliss",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "regular £5.65 / large £6.95",
+            "options": [
+              {
+                "kind": "size",
+                "amount": 5.65,
+                "amount_minor": 565,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "regular"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/3/price",
+                  "raw_text": "regular £5.65"
+                }
+              },
+              {
+                "kind": "size",
+                "amount": 6.95,
+                "amount_minor": 695,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "size": "large"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/22/items/3/price",
+                  "raw_text": "large £6.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ],
+      "pricing": {
+        "regular": "£5.65",
+        "large": "£6.95"
+      },
+      "site_heading": "Smoothies reg £5.65 / large £6.95",
+      "normalized_pricing": {
+        "currency": "GBP",
+        "options": [
+          {
+            "kind": "size",
+            "amount": 5.65,
+            "amount_minor": 565,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "size": "regular"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/22/pricing/regular",
+              "raw_text": "regular: £5.65"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/22/pricing/regular",
+              "raw_text": "regular: £5.65"
+            }
+          },
+          {
+            "kind": "size",
+            "amount": 6.95,
+            "amount_minor": 695,
+            "pricing_effect": "absolute",
+            "qualifiers": {
+              "size": "large"
+            },
+            "evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/22/pricing/large",
+              "raw_text": "large: £6.95"
+            },
+            "qualifier_evidence": {
+              "source": "section_pricing",
+              "source_path": "/menu/22/pricing/large",
+              "raw_text": "large: £6.95"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "section": "Spritz & cocktails",
+      "items": [
+        {
+          "name": "Aperol Spritz",
+          "price": "£9",
+          "dietary": [],
+          "description": "Aperol, prosecco & soda.",
+          "item_id": "spritz-cocktails--aperol-spritz",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9,
+                "amount_minor": 900,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/0/price",
+                  "raw_text": "£9"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Hugo Spritz",
+          "price": "£9",
+          "dietary": [],
+          "description": "Elderflower, prosecco & soda.",
+          "item_id": "spritz-cocktails--hugo-spritz",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£9",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 9,
+                "amount_minor": 900,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/1/price",
+                  "raw_text": "£9"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Classic Bellini",
+          "price": "£7.95",
+          "dietary": [],
+          "description": "Peach purée & prosecco.",
+          "item_id": "spritz-cocktails--classic-bellini",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.95,
+                "amount_minor": 795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/2/price",
+                  "raw_text": "£7.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Mimosa",
+          "price": "£7.95",
+          "dietary": [],
+          "description": "Fresh orange juice & prosecco.",
+          "item_id": "spritz-cocktails--mimosa",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.95,
+                "amount_minor": 795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/3/price",
+                  "raw_text": "£7.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Elderflower Bellini",
+          "price": "£7.95",
+          "dietary": [],
+          "description": "Elderflower & prosecco.",
+          "item_id": "spritz-cocktails--elderflower-bellini",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£7.95",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 7.95,
+                "amount_minor": 795,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/4/price",
+                  "raw_text": "£7.95"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Virgin Hugo 0%",
+          "price": "£6.50",
+          "dietary": [],
+          "description": "Lemon, mint, elderflower syrup & soda.",
+          "item_id": "spritz-cocktails--virgin-hugo-0",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£6.50",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 6.5,
+                "amount_minor": 650,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/23/items/5/price",
+                  "raw_text": "£6.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    },
+    {
+      "section": "Soft drinks & juice",
+      "items": [
+        {
+          "name": "Fresh Orange Juice",
+          "price": "£4.95 / £6.20",
+          "dietary": [],
+          "description": "Freshly pressed to order.",
+          "item_id": "soft-drinks-juice--fresh-orange-juice",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.95 / £6.20",
+            "options": [
+              {
+                "kind": "unlabelled",
+                "amount": 4.95,
+                "amount_minor": 495,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "option_index": 1
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/0/price",
+                  "raw_text": "£4.95"
+                },
+                "ambiguity": {
+                  "status": "unresolved",
+                  "reason": "The source data provides multiple prices without a supported label mapping."
+                }
+              },
+              {
+                "kind": "unlabelled",
+                "amount": 6.2,
+                "amount_minor": 620,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "option_index": 2
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/0/price",
+                  "raw_text": "£6.20"
+                },
+                "ambiguity": {
+                  "status": "unresolved",
+                  "reason": "The source data provides multiple prices without a supported label mapping."
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "San Pellegrino",
+          "price": "£2.65",
+          "dietary": [],
+          "description": "Lemon, orange, blood orange or orange pomegranate.",
+          "item_id": "soft-drinks-juice--san-pellegrino",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.65",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.65,
+                "amount_minor": 265,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/1/price",
+                  "raw_text": "£2.65"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Chinotto",
+          "price": "£2.65",
+          "dietary": [],
+          "description": "Bitter orange soft drink.",
+          "item_id": "soft-drinks-juice--chinotto",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.65",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.65,
+                "amount_minor": 265,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/2/price",
+                  "raw_text": "£2.65"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Ginger Beer",
+          "price": "£4.50",
+          "dietary": [],
+          "description": null,
+          "item_id": "soft-drinks-juice--ginger-beer",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£4.50",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 4.5,
+                "amount_minor": 450,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/3/price",
+                  "raw_text": "£4.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Coca-Cola / Diet / Rio Tropical",
+          "price": "£2.50",
+          "dietary": [],
+          "description": null,
+          "item_id": "soft-drinks-juice--coca-cola-diet-rio-tropical",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£2.50",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 2.5,
+                "amount_minor": 250,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/4/price",
+                  "raw_text": "£2.50"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Peach / Apple Juice",
+          "price": "£3.25",
+          "dietary": [],
+          "description": null,
+          "item_id": "soft-drinks-juice--peach-apple-juice",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£3.25",
+            "options": [
+              {
+                "kind": "base",
+                "amount": 3.25,
+                "amount_minor": 325,
+                "pricing_effect": "absolute",
+                "qualifiers": {},
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/5/price",
+                  "raw_text": "£3.25"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        },
+        {
+          "name": "Water",
+          "price": "£1.45 / £1.75",
+          "dietary": [],
+          "description": "Still / sparkling.",
+          "item_id": "soft-drinks-juice--water",
+          "pricing": {
+            "currency": "GBP",
+            "raw_price_text": "£1.45 / £1.75",
+            "options": [
+              {
+                "kind": "variant",
+                "amount": 1.45,
+                "amount_minor": 145,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "still"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/6/price",
+                  "raw_text": "£1.45"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/24/items/6/description",
+                  "raw_text": "Still / sparkling"
+                }
+              },
+              {
+                "kind": "variant",
+                "amount": 1.75,
+                "amount_minor": 175,
+                "pricing_effect": "absolute",
+                "qualifiers": {
+                  "variant": "sparkling"
+                },
+                "evidence": {
+                  "source": "item_price",
+                  "source_path": "/menu/24/items/6/price",
+                  "raw_text": "£1.75"
+                },
+                "qualifier_evidence": {
+                  "source": "item_description",
+                  "source_path": "/menu/24/items/6/description",
+                  "raw_text": "Still / sparkling"
+                }
+              }
+            ]
+          },
+          "description_pricing": null
+        }
+      ]
+    }
+  ],
+  "source": {
+    "url": "https://zukiscaffetteria.co.uk/",
+    "verified_on": "2026-09-14"
+  },
+  "dietary_legend": {
+    "V": "vegetarian",
+    "Vg": "vegan"
+  },
+  "customer_notes": {
+    "allergies": "Please let us know about any allergies or dietary needs — due to our small kitchen, traces of allergens may be present.",
+    "train_travel": "Customers catching trains should allow at least 15 minutes during busy periods."
+  }
+}

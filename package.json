@@ -1,0 +1,25 @@
+{
+  "name": "zuki-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zuki's Caffetteria menu data and AI assistant backend",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "ask": "npm run build --silent && node --env-file=.env dist/index.js",
+    "test": "npm run build --silent && node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.13.4",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.125.0",
+    "zod": "^4.6.5"
+  }
+}
