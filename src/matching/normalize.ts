@@ -68,13 +68,23 @@ export function deriveSourceNamePhrases(
   }
 
   const delimiterParts = trimmedName
-    .split(/\s+\/\s+|\s*·\s*/u)
+    .split(/\s+\/\s+|\s*(?:\u00c2\u00b7|\u00b7)\s*/u)
     .map((part) => part.trim())
     .filter((part) => part.length > 0);
+
+  const trailingSpreadPhrase =
+    /\s+spread$/iu.test(trimmedName)
+      ? trimmedName
+          .replace(/\s+spread$/iu, "")
+          .trim()
+      : "";
 
   return uniquePreservingOrder([
     trimmedName,
     ...delimiterParts,
+    ...(trailingSpreadPhrase.length === 0
+      ? []
+      : [trailingSpreadPhrase]),
   ]);
 }
 

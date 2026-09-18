@@ -125,6 +125,7 @@ type KnownSourceZukiData = Pick<
   | "source"
   | "dietary_legend"
   | "customer_notes"
+  | "business_facts"
 >;
 
 export type NormalizedMenuItem =

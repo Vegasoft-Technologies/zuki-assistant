@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
@@ -13,6 +13,10 @@ import {
 import {
   transformZukiData,
 } from "../dist/data/transformer.js";
+
+import {
+  zukiDataSchema,
+} from "../dist/data/schema.js";
 
 import {
   createMenuMatcher,
@@ -1038,12 +1042,12 @@ test(
         normalizedData,
         {
           claudeResponder:
-            async () => {
+            async (context) => {
               claudeCalls += 1;
 
               return {
                 text:
-                  "FAKE CLAUDE RESPONSE",
+                  context.item.name,
                 model:
                   "fake-model",
                 stopReason:
@@ -1112,5 +1116,52 @@ test(
       claudeCalls,
       1,
     );
+  },
+);
+
+test(
+  "STEP3 provenance schema rejects invalid status source URL and calendar date",
+  () => {
+    const cases = [
+      {
+        label: "invalid status",
+        mutate: (data) => {
+          data.business_facts.provenance.dog_policy.status =
+            "totally_fake";
+        },
+      },
+      {
+        label: "invalid source URL",
+        mutate: (data) => {
+          data.business_facts.provenance.dog_policy.sources =
+            ["not-a-url"];
+        },
+      },
+      {
+        label: "invalid calendar date",
+        mutate: (data) => {
+          data.business_facts.provenance.dog_policy.verified_on =
+            "2026-99-99";
+        },
+      },
+    ];
+
+    for (const entry of cases) {
+      const candidate =
+        structuredClone(sourceData);
+
+      entry.mutate(candidate);
+
+      const result =
+        zukiDataSchema.safeParse(
+          candidate,
+        );
+
+      assert.equal(
+        result.success,
+        false,
+        entry.label,
+      );
+    }
   },
 );

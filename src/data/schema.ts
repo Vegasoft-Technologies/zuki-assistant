@@ -43,6 +43,69 @@ const menuSectionSchema = z
   })
   .passthrough();
 
+const businessFactProvenanceSchema = z
+  .object({
+    status: z.enum([
+      "verified",
+      "verified_third_party",
+      "verified_business_managed_listing",
+    ]),
+    sources: z
+      .array(
+        z
+          .string()
+          .url()
+          .refine(
+            (value) => /^https?:\/\//iu.test(value),
+            "source must use http or https",
+          ),
+      )
+      .min(1),
+    verified_on: z
+      .string()
+      .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        "verified_on must use YYYY-MM-DD format",
+      )
+      .refine(
+        (value) => {
+          const date =
+            new Date(
+              `${value}T00:00:00Z`,
+            );
+
+          return (
+            !Number.isNaN(
+              date.getTime(),
+            ) &&
+            date
+              .toISOString()
+              .slice(0, 10) === value
+          );
+        },
+        "verified_on must be a valid calendar date",
+      ),
+  })
+  .passthrough();
+
+const businessFactsSchema = z
+  .object({
+    dog_policy: nonEmptyStringSchema.optional(),
+    parking: nonEmptyStringSchema.optional(),
+    card_payments: nonEmptyStringSchema.optional(),
+    provenance: z
+      .object({
+        dog_policy:
+          businessFactProvenanceSchema.optional(),
+        parking:
+          businessFactProvenanceSchema.optional(),
+        card_payments:
+          businessFactProvenanceSchema.optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
 export const zukiDataSchema = z
   .object({
     business: z
@@ -92,6 +155,9 @@ export const zukiDataSchema = z
     dietary_legend: z.record(z.string(), nonEmptyStringSchema),
 
     customer_notes: z.record(z.string(), nonEmptyStringSchema),
+
+    business_facts:
+      businessFactsSchema.optional(),
   })
   .passthrough();
 

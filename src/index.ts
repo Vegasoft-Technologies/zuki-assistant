@@ -3,10 +3,13 @@ import {
   createClaudeClientFromEnvironment,
 } from "./claude/client.js";
 
-import {
-  createAssistantService,
-  type ClaudeResponder,
+import type {
+  ClaudeResponder,
 } from "./assistant/service.js";
+
+import {
+  createKnowledgeSafeAssistantService,
+} from "./assistant/knowledge-safe-service.js";
 
 import {
   loadZukiData,
@@ -70,7 +73,7 @@ async function main(): Promise<void> {
     createOptionalClaudeResponder();
 
   const assistant =
-    createAssistantService(
+    createKnowledgeSafeAssistantService(
       normalizedData,
       claudeResponder === undefined
         ? {}
@@ -80,7 +83,7 @@ async function main(): Promise<void> {
     );
 
   const result =
-    await assistant.ask(query);
+    await assistant.lookup(query);
 
   switch (result.status) {
     case "answered":
@@ -91,10 +94,9 @@ async function main(): Promise<void> {
       console.log(result.text);
       return;
 
-    case "not_found":
+    case "transfer_required":
       console.log(result.text);
       return;
-
     case "unavailable":
       console.log(result.text);
 

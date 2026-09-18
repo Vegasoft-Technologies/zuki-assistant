@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   NormalizedMenuItem,
   NormalizedZukiData,
 } from "../data/transformer.js";
@@ -100,6 +100,198 @@ function containsNormalizedPhrase(
   );
 }
 
+function isAtMostOneEditApart(
+  left: string,
+  right: string,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (
+    Math.abs(left.length - right.length) > 1
+  ) {
+    return false;
+  }
+
+  let leftIndex = 0;
+  let rightIndex = 0;
+  let edits = 0;
+
+  while (
+    leftIndex < left.length &&
+    rightIndex < right.length
+  ) {
+    if (
+      left[leftIndex] ===
+      right[rightIndex]
+    ) {
+      leftIndex += 1;
+      rightIndex += 1;
+      continue;
+    }
+
+    edits += 1;
+
+    if (edits > 1) {
+      return false;
+    }
+
+    if (left.length > right.length) {
+      leftIndex += 1;
+    } else if (right.length > left.length) {
+      rightIndex += 1;
+    } else {
+      leftIndex += 1;
+      rightIndex += 1;
+    }
+  }
+
+  if (
+    leftIndex < left.length ||
+    rightIndex < right.length
+  ) {
+    edits += 1;
+  }
+
+  return edits <= 1;
+}
+
+function findTokenSequence(
+  haystack: readonly string[],
+  needle: readonly string[],
+): number {
+  if (
+    needle.length === 0 ||
+    needle.length > haystack.length
+  ) {
+    return -1;
+  }
+
+  for (
+    let start = 0;
+    start <= haystack.length - needle.length;
+    start += 1
+  ) {
+    const matches = needle.every(
+      (token, offset) =>
+        haystack[start + offset] === token,
+    );
+
+    if (matches) {
+      return start;
+    }
+  }
+
+  return -1;
+}
+
+function hasUnsafeLongerPhraseContinuation(
+  normalizedQuery: string,
+  candidate: MenuMatchCandidate,
+  index: readonly IndexedMenuItem[],
+): boolean {
+  const queryTokens =
+    tokenizeMatchText(normalizedQuery);
+  const candidateTokens =
+    tokenizeMatchText(
+      candidate.normalizedMatchedPhrase,
+    );
+
+  const start = findTokenSequence(
+    queryTokens,
+    candidateTokens,
+  );
+
+  if (start < 0) {
+    return false;
+  }
+
+  const continuation = queryTokens.slice(
+    start + candidateTokens.length,
+  );
+
+  const first = continuation[0];
+
+  if (first === undefined) {
+    return false;
+  }
+
+  const second = continuation[1];
+  const firstTwo =
+    second === undefined
+      ? null
+      : `${first}${second}`;
+
+  return index.some((indexedItem) => {
+    if (
+      indexedItem.item.item_id ===
+      candidate.itemId
+    ) {
+      return false;
+    }
+
+    return indexedItem.phrases.some(
+      (phrase) => {
+        const longerTokens =
+          tokenizeMatchText(
+            phrase.normalizedPhrase,
+          );
+
+        if (
+          longerTokens.length <=
+          candidateTokens.length
+        ) {
+          return false;
+        }
+
+        const prefixMatches =
+          candidateTokens.every(
+            (token, offset) =>
+              longerTokens[offset] === token,
+          );
+
+        if (!prefixMatches) {
+          return false;
+        }
+
+        const suffix = longerTokens.slice(
+          candidateTokens.length,
+        );
+        const expectedNext = suffix[0];
+
+        if (expectedNext === undefined) {
+          return false;
+        }
+
+        if (
+          isAtMostOneEditApart(
+            first,
+            expectedNext,
+          )
+        ) {
+          return true;
+        }
+
+        if (
+          firstTwo !== null &&
+          isAtMostOneEditApart(
+            firstTwo,
+            expectedNext,
+          )
+        ) {
+          return true;
+        }
+
+        return continuation.some(
+          (token) =>
+            token.length >= 4 &&
+            suffix.includes(token),
+        );
+      },
+    );
+  });
+}
 function compareCandidateSpecificity(
   left: MenuMatchCandidate,
   right: MenuMatchCandidate,
@@ -458,6 +650,26 @@ export function createMenuMatcher(
         throw new Error(
           "Matcher reached an invalid single-candidate state.",
         );
+      }
+
+      if (
+        hasUnsafeLongerPhraseContinuation(
+          normalizedQuery,
+          candidate,
+          index,
+        )
+      ) {
+        return {
+          status: "unknown",
+          query,
+          normalizedQuery,
+          sectionContext:
+            sectionContext?.section ?? null,
+          sectionContextSource:
+            sectionContext?.source ?? null,
+          reason:
+            "The query may refer to a longer source-backed menu item and cannot be matched safely.",
+        };
       }
 
       return {
