@@ -90,15 +90,14 @@ JSON cevabı modelin tool sonucuna bütün olarak gider; extraction/boolean mapp
 yapılmaz. Beklenen örnek:
 
 ```json
-{ "status": "not_found", "query": "Do you serve sushi?", "source": "local", "text": "I couldn't identify a source-backed menu item matching that request." }
+{ "status": "transfer_required", "query": "Do you serve sushi?", "source": "local", "text": "I'm not sure about that. Let me transfer you to someone who can help.", "reason": "No source-backed answer was found for the request." }
 ```
 
 | status | Sesli davranış |
 | --- | --- |
 | `answered` | `text` aynen okunur, ekleme yapılmaz. |
 | `clarification_required` | `text` netleştirme sorusu olarak okunur; cevap beklenir, yeni lookup yapılır. **Transfer yok.** |
-| `not_found` | `text` aynen okunur; otomatik transfer yok. Israr/farklı istek sonrası transfer önerilebilir, kabul edilirse yapılır. |
-| `transfer_required` | Önce `text`, sonra sabit cümle ve insana transfer. |
+| `transfer_required` | Önce `text`, sonra sabit cümle ve insana transfer. `not_found` de dahil (bkz. aşağı, wrapper bunu burada üretir). |
 | `unavailable` | Önce `text`, sonra sabit cümle ve insana transfer; üç Claude hata reason'ı da aynı davranır. |
 
 Sabit cümle: “I'm not sure about that. Let me transfer you to someone who can help.”
@@ -107,26 +106,28 @@ söylemez. HTTP timeout/hata, geçersiz JSON, bilinmeyen status veya boş text't
 cevap uydurmadan aynı transfer fallback'i kullanılır. Rezervasyon nazikçe reddedilir,
 transfer önerilir; onaysız rezervasyon transferi veya booking akışı yoktur.
 
-**Sözleşme henüz kesin değil:** `src/assistant/service.ts` beş status'u doğruluyor,
-ama Atiye'nin HTTP endpoint'i henüz yok. Şunları onun deploy'unda teyit et:
+**Sözleşme kesinleşti (2026-09-19, Esma'nın kararı):** Atiye'nin `/api/lookup` endpoint'i
+`src/assistant/service.ts`'i değil, `src/assistant/knowledge-safe-service.ts` wrapper'ını
+saracak. Bu wrapper `not_found` sonucunu her zaman `transfer_required`'a çeviriyor (aynı sabit
+transfer text'iyle), yani `not_found` dışarıya hiç çıkmıyor. Vapi'nin gördüğü public sözleşme
+**dört status**: `answered`, `clarification_required`, `transfer_required`, `unavailable`.
+Bu kod (`assistant-config.ts`) artık doğrudan bu dört status'a göre yazıldı — `not_found`
+branch'i kaldırıldı, çünkü hiç tetiklenmeyecek.
 
-**Kodda somut entegrasyon farkı:** CLI'nin (`src/index.ts`) kullandığı
-`src/assistant/knowledge-safe-service.ts`, `not_found` sonucunu
-`transfer_required` olarak değiştiriyor. Mevcut sushi acceptance testi de bu
-wrapper davranışını bekliyor. Endpoint bu wrapper'ı doğrudan kullanırsa sushi
-otomatik transfer olur ve bu Vapi spec'inin beş status sözleşmesi sağlanmaz.
-Atiye ile hangi servisin HTTP'ye açılacağını ve `not_found`'un korunmasını teyit
-etmeden mapping'i kesinleştirme. Wrapper'ın transfer text'i sabit kapanışla aynı
-olduğundan doğrudan kullanımı cümlenin iki kez okunmasına da yol açabilir.
-Bu kurulum backend'i değiştirmez veya gelen status'u tahminle yeniden eşlemez.
+**Davranış değişikliği:** Önceki taslakta menüde bulunamayan bir ürün (`not_found`) transfer
+etmeden "bulamadım" derdi, ısrar edilirse transfer önerilirdi. Artık wrapper'ın kararıyla
+bulunamayan her ürün **doğrudan mandatory transfer** tetikliyor (sushi acceptance testi de bunu
+bekliyor). Bu bir ürün kararı, kodun hatası değil — ama telefon testinde "sushi soruldu, hemen
+insana bağlandı" davranışını beklenen sonuç olarak değerlendir.
 
-- [ ] Beş status aynen, boolean'a indirgenmeden, kök JSON'da `status` ve boş olmayan
-  `text` ile HTTP 2xx döner; `unavailable` dahil backend sonuçları korunur.
+- [ ] Atiye'nin endpoint'i dört status'u aynen, boolean'a indirgenmeden, kök JSON'da `status`
+  ve boş olmayan `text` ile HTTP 2xx döner; `unavailable` dahil backend sonuçları korunur.
 - [ ] Tool testinde `query` aynen ulaşır, bütün cevap Vapi loglarında görünür.
 - [ ] Auth gerekiyorsa Vapi credential entegrasyonu ayrıca kararlaştırılır; bu
   geçici sözleşme lookup endpoint'ine auth header göndermez. Vapi private key'i
   backend'e gönderilmez.
-- [ ] Şema farklıysa mapping'i uyarlamadan telefon kabulünü tamamlandı sayma.
+- [ ] Şema farklıysa (örn. gerçekten 5 status dönerse) kodu uyarlamadan telefon kabulünü
+  tamamlandı sayma.
 
 ## Doğrulama ve telefon kabulü
 
@@ -144,7 +145,8 @@ ve telefon bağlantısının kanıtı değildir. Bunlar ayrıca test edilmelidir
   faktüel soruda lookup çağrıldığını ve yalnız backend text'inin okunduğunu kontrol et.
 - [ ] Belirsiz ürün → `clarification_required`: soruyu aynen okur, transfer etmez;
   cevap sonrası aynı görüşmede yeni lookup görülür.
-- [ ] Sushi → `not_found`: uydurma cevap ve otomatik transfer yok.
+- [ ] Sushi (bulunamayan ürün) → `transfer_required`: sabit transfer cümlesi bir kez okunur,
+  otomatik insana bağlanır (artık ayrı bir `not_found` davranışı yok).
 - [ ] Desteklenmeyen miktar → `transfer_required`: backend text'i tamamlanır,
   sabit cümle bir kez duyulur, ayrı insan test telefonu çalar ve iki yönlü ses vardır.
 - [ ] Üç `unavailable` reason'ını kontrollü test backend'inde ayrı ayrı tetikle;

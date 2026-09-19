@@ -107,11 +107,10 @@ test("uncertain network outcomes and malformed success responses require dashboa
   }
 });
 
-test("deployed prompt keeps clarification and not-found separate from mandatory transfers", () => {
-  assert.deepEqual(Object.keys(STATUS_RULES).sort(), ["answered", "clarification_required", "not_found", "transfer_required", "unavailable"].sort());
+test("deployed prompt keeps clarification separate from mandatory transfers", () => {
+  assert.deepEqual(Object.keys(STATUS_RULES).sort(), ["answered", "clarification_required", "transfer_required", "unavailable"].sort());
   assert.match(STATUS_RULES.clarification_required, /Do NOT transfer/);
   assert.match(STATUS_RULES.clarification_required, /NEW lookup_zuki_info/);
-  assert.match(STATUS_RULES.not_found, /Do NOT automatically transfer/);
   for (const status of ["transfer_required", "unavailable"]) {
     assert.match(STATUS_RULES[status], /Read text verbatim, then invoke transferCall/);
   }
