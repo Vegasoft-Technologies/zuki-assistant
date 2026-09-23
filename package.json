@@ -10,17 +10,22 @@
     "typecheck": "tsc --noEmit",
     "vapi:provision": "npm run build --silent && node --env-file-if-exists=.env dist/vapi/provision.js",
     "ask": "npm run build --silent && node --env-file=.env dist/index.js",
+    "serve": "npm run build --silent && node --env-file=.env dist/serve.js",
     "test": "npm run build --silent && node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^24.13.4",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.125.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "zod": "^4.6.5"
   }
 }
