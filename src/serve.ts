@@ -47,9 +47,9 @@ async function main(): Promise<void> {
   const portStr = process.env.PORT || "3000";
   const port = parseInt(portStr, 10);
 
-  app.listen(port, () => {
-    console.log(`API Server is running at http://localhost:${port}`);
-    console.log(`Health check: http://localhost:${port}/health`);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`API Server is running on port ${port}`);
+    console.log(`Health check: /health`);
   });
 }
 

@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "vapi:provision": "npm run build --silent && node --env-file-if-exists=.env dist/vapi/provision.js",
     "ask": "npm run build --silent && node --env-file=.env dist/index.js",
-    "serve": "npm run build --silent && node --env-file=.env dist/serve.js",
+    "serve": "node dist/serve.js",
     "test": "npm run build --silent && node --test"
   },
   "keywords": [],
