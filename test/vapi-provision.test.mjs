@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { provision } from "../dist/vapi/provision.js";
 import { createLookupTool, createAssistantConfig, SYSTEM_PROMPT, STATUS_RULES, TRANSFER_MESSAGE } from "../dist/vapi/assistant-config.js";
+import { createApiServer } from "../dist/api/server.js";
 
 const toolId = "11111111-1111-4111-8111-111111111111";
 const assistantId = "22222222-2222-4222-8222-222222222222";
@@ -112,13 +113,42 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.match(STATUS_RULES.clarification_required, /Do NOT transfer/);
   assert.match(STATUS_RULES.clarification_required, /NEW lookup_zuki_info/);
   for (const status of ["transfer_required", "unavailable"]) {
-    assert.match(STATUS_RULES[status], /Read text verbatim, then invoke transferCall/);
+    assert.match(STATUS_RULES[status], /Do not read response aloud\. Invoke transferCall immediately/);
   }
+  for (const status of ["answered", "clarification_required"]) {
+    assert.match(STATUS_RULES[status], /Read response verbatim/);
+  }
+  assert.doesNotMatch(SYSTEM_PROMPT, /\btext\b/);
+  assert.match(SYSTEM_PROMPT, /status error/);
   const config = createAssistantConfig(toolId, env.ZUKI_TEST_TRANSFER_NUMBER);
   assert.equal(config.model.messages[0].content, SYSTEM_PROMPT);
   assert.match(SYSTEM_PROMPT, /For EVERY factual question/);
   assert.match(SYSTEM_PROMPT, /Reservations are not supported/);
+  assert.match(SYSTEM_PROMPT, /Only when the caller explicitly asks to book/);
   assert.match(SYSTEM_PROMPT, /Never paraphrase/);
   assert.equal(config.transcriber.language, "en");
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
+});
+
+test("prompt reads the fields the deployed /api/lookup server actually returns", async () => {
+  const results = {
+    "sunday": { status: "answered", text: "On sunday, Zuki's closes at 4 PM." },
+    "sushi": { status: "transfer_required", text: "I'm not sure about that. Let me transfer you to someone who can help." },
+    "breakfast": { status: "unavailable", text: "I could not verify that response against the current menu data." },
+  };
+  const app = createApiServer({ lookup: async (query) => results[query] });
+  const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
+  const post = async (query) => (await fetch(`http://127.0.0.1:${server.address().port}/api/lookup`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query }),
+  })).json();
+  try {
+    assert.deepEqual(await post("sunday"), { status: "answered", response: "On sunday, Zuki's closes at 4 PM." });
+    for (const query of ["sushi", "breakfast"]) {
+      const body = await post(query);
+      assert.equal(body.response, TRANSFER_MESSAGE);
+      assert.equal(body.originalReason, results[query].text);
+    }
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
