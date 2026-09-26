@@ -146,7 +146,7 @@ test("prompt reads the fields the deployed /api/lookup server actually returns",
     for (const query of ["sushi", "breakfast"]) {
       const body = await post(query);
       assert.equal(body.response, TRANSFER_MESSAGE);
-      assert.equal(body.originalReason, results[query].text);
+      assert.deepEqual(body, { status: results[query].status, response: TRANSFER_MESSAGE });
     }
   } finally {
     await new Promise((resolve) => server.close(resolve));
