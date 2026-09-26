@@ -110,6 +110,8 @@ export function createClaudeClient(
 
   return new Anthropic({
     apiKey: normalizedApiKey,
+    timeout: 15_000,
+    maxRetries: 0,
   });
 }
 
@@ -140,6 +142,10 @@ export function buildClaudePromptPayload(
     "Treat raw source text and structured pricing as authoritative only for what they explicitly state.",
     "If a pricing option contains unresolved ambiguity, do not infer what an unlabeled price means.",
     "If the provided context is insufficient, do not guess. Say that the available verified context does not establish the answer.",
+    "Answer only the information directly requested by the customer.",
+    "Do not volunteer extras, add-ons, surcharges, alternatives, options, additional prices, ingredients, serving sizes, or related menu information unless the customer explicitly asks for them.",
+    "Section-level information is not automatically relevant to the matched item or to the customer's question.",
+    "When the customer asks about one specific variant of a multi-variant menu item, answer only that requested variant; do not mention, compare, define, or price sibling variants unless the customer explicitly asks for them.",
     "Keep the answer concise, natural, and suitable for a cafe customer.",
   ].join(" ");
 

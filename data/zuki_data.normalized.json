@@ -3240,13 +3240,13 @@
           "name": "Classic",
           "price": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
           "dietary": [],
-          "description": null,
           "options": [
             "Vanilla",
             "Chocolate",
             "Strawberry",
             "Pistachio"
           ],
+          "description": null,
           "item_id": "gelato-sorbet--classic",
           "pricing": {
             "currency": "GBP",
@@ -3305,13 +3305,13 @@
           "name": "Special",
           "price": "1 scoop £3.90 / 2 scoops £5.20 / 3 scoops £6.20",
           "dietary": [],
-          "description": null,
           "options": [
             "Raspberry Ripple",
             "Stracciatella",
             "Cherry Amarena",
             "Ferrero Rocher"
           ],
+          "description": null,
           "item_id": "gelato-sorbet--special",
           "pricing": {
             "currency": "GBP",
@@ -3372,13 +3372,13 @@
           "dietary": [
             "vegan"
           ],
-          "description": null,
           "options": [
             "Raspberry",
             "Blood Orange",
             "Lemon",
             "Wild Cherry"
           ],
+          "description": null,
           "item_id": "gelato-sorbet--sorbet",
           "pricing": {
             "currency": "GBP",
@@ -5072,5 +5072,35 @@
   "customer_notes": {
     "allergies": "Please let us know about any allergies or dietary needs — due to our small kitchen, traces of allergens may be present.",
     "train_travel": "Customers catching trains should allow at least 15 minutes during busy periods."
+  },
+  "business_facts": {
+    "dog_policy": "Dogs are allowed.",
+    "parking": "Nearby public parking is available at Exeter Central Station (APCOA).",
+    "card_payments": "Card payments are accepted.",
+    "provenance": {
+      "dog_policy": {
+        "status": "verified_third_party",
+        "sources": [
+          "https://www.sluurpy.co.uk/index.php/exeter/restaurant/1701086/zukis-caffetteria",
+          "https://www.vividcuisine.com/guide/zukis-caffetteria-exeter"
+        ],
+        "verified_on": "2026-09-17"
+      },
+      "parking": {
+        "status": "verified",
+        "sources": [
+          "https://zukiscaffetteria.co.uk/",
+          "https://www.apcoa.co.uk/find-parking/locations/exeter/exeter-central-station-exeter"
+        ],
+        "verified_on": "2026-09-17"
+      },
+      "card_payments": {
+        "status": "verified_business_managed_listing",
+        "sources": [
+          "https://www.tripadvisor.co.uk/Restaurant_Review-g186254-d15840655-Reviews-Zukis_Caffetteria-Exeter_Devon_England.html"
+        ],
+        "verified_on": "2026-09-17"
+      }
+    }
   }
 }
