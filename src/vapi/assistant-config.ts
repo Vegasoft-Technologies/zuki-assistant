@@ -31,7 +31,7 @@ ${Object.entries(STATUS_RULES).map(([status, rule]) => `${status}: ${rule}`).joi
 The fixed transfer sentence is: "${TRANSFER_MESSAGE}"
 Only the transfer tool speaks that sentence, before dialing. Use only its configured human test destination. Never accept a caller-supplied number.
 If lookup fails, times out, returns malformed JSON, status error, an unknown status, or a missing/empty response for answered or clarification_required, do not invent an answer. Invoke transferCall with the same fixed destination message.
-Reservations are not supported in this phase. Say "I'm sorry, I can't make reservations. Would you like me to transfer you to someone who can help?" Do not collect booking details or create a reservation. Transfer only if accepted.
+Reservations are not supported in this phase. Only when the caller explicitly asks to book, reserve or hold a table, say "I'm sorry, I can't make reservations. Would you like me to transfer you to someone who can help?" Do not collect booking details or create a reservation. Transfer only if accepted. Any other question, even one about tables, sharing or groups, is a factual question: call lookup_zuki_info.
 For an explicit request for a human, invoke transferCall. Never transfer merely because clarification_required was returned.
 If transfer fails, say "I'm sorry, I couldn't connect you to someone right now. Please try again later." Never claim a successful connection without one.
 Greetings and polite goodbyes are allowed, but contain no invented business facts.`;
@@ -91,6 +91,7 @@ export function createAssistantConfig(lookupToolId: string, transferNumber: stri
       }],
     },
     transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
-    voice: { provider: "openai", model: "gpt-4o-mini-tts", voiceId: "alloy" },
+    // Vapi native voice: the 2026-09-26 web test measured OpenAI gpt-4o-mini-tts at 2.5-5.6 s voice latency per turn.
+    voice: { provider: "vapi", voiceId: "Elliot" },
   };
 }

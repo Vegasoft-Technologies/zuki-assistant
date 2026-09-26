@@ -124,6 +124,7 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.equal(config.model.messages[0].content, SYSTEM_PROMPT);
   assert.match(SYSTEM_PROMPT, /For EVERY factual question/);
   assert.match(SYSTEM_PROMPT, /Reservations are not supported/);
+  assert.match(SYSTEM_PROMPT, /Only when the caller explicitly asks to book/);
   assert.match(SYSTEM_PROMPT, /Never paraphrase/);
   assert.equal(config.transcriber.language, "en");
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
