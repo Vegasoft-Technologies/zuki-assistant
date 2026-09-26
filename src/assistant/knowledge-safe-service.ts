@@ -100,6 +100,32 @@ export function createKnowledgeSafeAssistantService(
           );
 
         if (
+          menuMatch.status === "matched" &&
+          menuMatch.candidate.item.dietary?.includes("vegan") === true
+        ) {
+          const menuResult =
+            await menuAssistant.ask(
+              query,
+              matchOptions,
+            );
+
+          if (
+            menuResult.status === "not_found"
+          ) {
+            return {
+              status: "transfer_required",
+              query,
+              source: "local",
+              text: TRANSFER_TEXT,
+              reason:
+                "No source-backed answer was found for the request.",
+            };
+          }
+
+          return menuResult;
+        }
+
+        if (
           menuMatch.status !== "unknown"
         ) {
           return {

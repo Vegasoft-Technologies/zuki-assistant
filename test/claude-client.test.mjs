@@ -7,6 +7,7 @@ import {
   ClaudeResponseError,
   answerMenuItemWithClaude,
   buildClaudePromptPayload,
+  createClaudeClient,
   readClaudeEnvironment,
 } from "../dist/claude/client.js";
 
@@ -58,6 +59,26 @@ if (
 
 const doppioContext =
   contextResult.context;
+
+test(
+  "Claude client timeout stays inside the Vapi lookup window and retries are disabled",
+  () => {
+    const client =
+      createClaudeClient(
+        "dummy-key",
+      );
+
+    assert.equal(
+      client.timeout,
+      15_000,
+    );
+
+    assert.equal(
+      client.maxRetries,
+      0,
+    );
+  },
+);
 
 test(
   "missing Anthropic API key fails configuration validation",
@@ -496,6 +517,48 @@ test(
     assert.equal(
       calls,
       0,
+    );
+  },
+);
+
+
+test(
+  "Claude prompt limits responses to information explicitly requested",
+  () => {
+    const prompt =
+      buildClaudePromptPayload(
+        doppioContext,
+      );
+
+    assert.match(
+      prompt.system,
+      /Answer only the information directly requested by the customer\./,
+    );
+
+    assert.match(
+      prompt.system,
+      /Do not volunteer extras, add-ons, surcharges, alternatives, options, additional prices, ingredients, serving sizes, or related menu information unless the customer explicitly asks for them\./,
+    );
+
+    assert.match(
+      prompt.system,
+      /Section-level information is not automatically relevant to the matched item or to the customer's question\./,
+    );
+  },
+);
+
+
+test(
+  "Claude prompt prevents unsolicited sibling variant answers",
+  () => {
+    const prompt =
+      buildClaudePromptPayload(
+        doppioContext,
+      );
+
+    assert.match(
+      prompt.system,
+      /When the customer asks about one specific variant of a multi-variant menu item, answer only that requested variant; do not mention, compare, define, or price sibling variants unless the customer explicitly asks for them\./,
     );
   },
 );

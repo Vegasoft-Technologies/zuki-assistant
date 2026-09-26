@@ -91,11 +91,11 @@ yapılmaz. Canlı server'ın (`src/api/server.ts`, Railway 2026-09-26) gerçek c
 
 ```json
 { "response": "On sunday, Zuki's closes at 4 PM.", "status": "answered" }
-{ "response": "I'll put you through to an advisor straight away.", "status": "transfer_required", "originalReason": "I'm not sure about that. Let me transfer you to someone who can help." }
+{ "response": "I'll put you through to an advisor straight away.", "status": "transfer_required" }
 ```
 
 Server servis sonucundaki `text`'i `response` alanına koyar. Transfer durumlarında
-`response` her zaman sabit transfer cümlesidir, servisin asıl metni `originalReason`'a taşınır.
+`response` her zaman sabit transfer cümlesidir.
 500 hatasında `status: "error"` döner.
 
 | status | Sesli davranış |
@@ -103,7 +103,7 @@ Server servis sonucundaki `text`'i `response` alanına koyar. Transfer durumlar�
 | `answered` | `response` aynen okunur, ekleme yapılmaz. |
 | `clarification_required` | `response` netleştirme sorusu olarak okunur; cevap beklenir, yeni lookup yapılır. **Transfer yok.** |
 | `transfer_required` | `response` okunmaz, doğrudan transferCall; sabit cümleyi transfer tool'u bir kez söyler. `not_found` de dahil (bkz. aşağı, wrapper bunu burada üretir). |
-| `unavailable` | `transfer_required` ile aynı; `originalReason` ne olursa olsun. |
+| `unavailable` | `transfer_required` ile aynı davranır. |
 
 Sabit cümle: “I'll put you through to an advisor straight away.” Server'ın transfer
 `response`'u ile birebir aynıdır (test bunu gerçek server üzerinden doğrular), böylece

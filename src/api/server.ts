@@ -5,8 +5,35 @@ import { z } from "zod";
 import type { KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
 
 const lookupRequestSchema = z.object({
-  query: z.string().min(1, "Query is required"),
+  query: z
+    .string()
+    .min(1, "Query is required")
+    .refine(
+      (value) => value.trim().length > 0,
+      "Query is required",
+    ),
 });
+
+function isMalformedJsonError(
+  error: unknown,
+): boolean {
+  if (
+    typeof error !== "object" ||
+    error === null
+  ) {
+    return false;
+  }
+
+  const candidate = error as {
+    status?: unknown;
+    type?: unknown;
+  };
+
+  return (
+    candidate.status === 400 &&
+    candidate.type === "entity.parse.failed"
+  );
+}
 
 export function createApiServer(
   assistantService: KnowledgeSafeAssistantService,
@@ -44,7 +71,6 @@ export function createApiServer(
           res.json({
             response: "I'll put you through to an advisor straight away.",
             status: result.status,
-            originalReason: result.text,
           });
           return;
         }
@@ -60,6 +86,13 @@ export function createApiServer(
   );
 
   app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (isMalformedJsonError(err)) {
+      res.status(400).json({
+        error: "Invalid request format",
+      });
+      return;
+    }
+
     console.error("API Server Error:", err);
     res.status(500).json({
       response: "I'll put you through to an advisor straight away.",

@@ -1488,3 +1488,322 @@ test(
     }
   },
 );
+
+
+test(
+  "STEP3 safety: natural spoken pounds and pence remain grounded",
+  async () => {
+    const answers = [
+      "The Cappuccino is 3 pounds 55.",
+      "The Cappuccino is 3 pounds and 55 pence.",
+    ];
+
+    for (const answer of answers) {
+      const service =
+        createKnowledgeSafeAssistantService(
+          normalizedData,
+          {
+            claudeResponder:
+              async () => ({
+                text: answer,
+                model: "fake-model",
+                stopReason: "end_turn",
+              }),
+          },
+        );
+
+      const result =
+        await service.lookup(
+          "How much is the Cappuccino?",
+        );
+
+      assert.equal(
+        result.status,
+        "answered",
+        answer,
+      );
+
+      assert.equal(
+        result.text,
+        answer,
+      );
+    }
+  },
+);
+
+
+test(
+  "STEP3 regression: Turkish breakfast plus wording remains grounded",
+  async () => {
+    const answer =
+      "The Turkish Breakfast Spread is \u00A329.95 for 2 plus \u00A352.95 for 4.";
+
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text: answer,
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      );
+
+    const result =
+      await service.lookup(
+        "How much is the Turkish breakfast?",
+      );
+
+    assert.equal(
+      result.status,
+      "answered",
+    );
+
+    assert.equal(
+      result.text,
+      answer,
+    );
+  },
+);
+
+
+test(
+  "STEP3 regression: Cappuccino base-price question rejects unsolicited section extras",
+  async () => {
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text:
+                "The Cappuccino is \u00A33.55. Alternative milk is +30p, an extra shot is +60p, and syrup is +50p.",
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      );
+
+    const result =
+      await service.lookup(
+        "How much is the Cappuccino?",
+      );
+
+    assert.equal(
+      result.status,
+      "unavailable",
+    );
+
+    assert.equal(
+      JSON.stringify(result).includes("+30p"),
+      false,
+    );
+
+    assert.equal(
+      JSON.stringify(result).includes("+60p"),
+      false,
+    );
+
+    assert.equal(
+      JSON.stringify(result).includes("+50p"),
+      false,
+    );
+  },
+);
+
+
+test(
+  "STEP3 regression: price confirmations allow neutral yes/no wording",
+  async () => {
+    const cases = [
+      {
+        query: "Is cappuccino \u00A33.55?",
+        answer: "Yes, the Cappuccino is \u00A33.55.",
+      },
+      {
+        query: "Is espresso \u00A32.75?",
+        answer: "No, Espresso is \u00A32.45.",
+      },
+    ];
+
+    for (const { query, answer } of cases) {
+      const service =
+        createKnowledgeSafeAssistantService(
+          normalizedData,
+          {
+            claudeResponder:
+              async () => ({
+                text: answer,
+                model: "fake-model",
+                stopReason: "end_turn",
+              }),
+          },
+        );
+
+      const result =
+        await service.lookup(query);
+
+      assert.equal(
+        result.status,
+        "answered",
+        answer,
+      );
+
+      assert.equal(
+        result.text,
+        answer,
+      );
+    }
+  },
+);
+
+test(
+  "STEP3 safety: confirmation wording does not legitimize an unsupported price",
+  async () => {
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text:
+                "Yes, the Cappuccino is \u00A39.99.",
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      );
+
+    const result =
+      await service.lookup(
+        "Is cappuccino \u00A39.99?",
+      );
+
+    assert.equal(
+      result.status,
+      "unavailable",
+    );
+  },
+);
+
+
+test(
+  "STEP3 regression: compact pence representation remains grounded",
+  async () => {
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text:
+                "The Cappuccino is 355p.",
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      );
+
+    const result =
+      await service.lookup(
+        "How much is the Cappuccino?",
+      );
+
+    assert.equal(
+      result.status,
+      "answered",
+    );
+
+    assert.equal(
+      result.text,
+      "The Cappuccino is 355p.",
+    );
+  },
+);
+
+test(
+  "STEP3 safety: compact pence representation cannot bypass unsupported-price grounding",
+  async () => {
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text:
+                "The Cappuccino is 999p.",
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      );
+
+    const result =
+      await service.lookup(
+        "How much is the Cappuccino?",
+      );
+
+    assert.equal(
+      result.status,
+      "unavailable",
+    );
+  },
+);
+
+
+test(
+  "STEP3 regression: supported equivalent monetary formats remain grounded",
+  async () => {
+    const cases = [
+      {
+        query: "How much is the Cappuccino?",
+        answers: [
+          "GBP 3.55",
+          "The Cappuccino is \u00A33,55.",
+          "The Cappuccino is 3,55 GBP.",
+        ],
+      },
+      {
+        query: "How much extra is alternative milk with a Cappuccino?",
+        answers: [
+          "30 pence",
+          "0.30 GBP",
+        ],
+      },
+    ];
+
+    for (const { query, answers } of cases) {
+      for (const answer of answers) {
+        const service =
+          createKnowledgeSafeAssistantService(
+            normalizedData,
+            {
+              claudeResponder:
+                async () => ({
+                  text: answer,
+                  model: "fake-model",
+                  stopReason: "end_turn",
+                }),
+            },
+          );
+
+        const result =
+          await service.lookup(query);
+
+        assert.equal(
+          result.status,
+          "answered",
+          answer,
+        );
+
+        assert.equal(
+          result.text,
+          answer,
+          answer,
+        );
+      }
+    }
+  },
+);

@@ -533,6 +533,11 @@ function extractClaimedPriceAmounts(
 ): number[] {
   const amounts = new Set<number>();
 
+  const compoundRanges: Array<{
+    start: number;
+    end: number;
+  }> = [];
+
   const addMajorAmount = (
     rawAmount: string,
   ): void => {
@@ -546,12 +551,76 @@ function extractClaimedPriceAmounts(
     }
   };
 
+  const compoundPoundsPattern =
+    /\b(\d+)\s*pounds?\s*(?:and\s*)?(\d{1,2})(?:\s*(?:p|pence)\b|(?=\s*(?:[.,!?;:]|$|\beach\b|\bper\b|\bfor\b)))/giu;
+
+  for (const match of text.matchAll(
+    compoundPoundsPattern,
+  )) {
+    const rawPounds = match[1];
+    const rawPence = match[2];
+    const startIndex = match.index;
+
+    if (
+      rawPounds === undefined ||
+      rawPence === undefined ||
+      startIndex === undefined
+    ) {
+      continue;
+    }
+
+    const pounds = Number(rawPounds);
+    const pence = Number(rawPence);
+
+    if (
+      Number.isSafeInteger(pounds) &&
+      pounds >= 0 &&
+      Number.isSafeInteger(pence) &&
+      pence >= 0 &&
+      pence < 100
+    ) {
+      amounts.add(
+        pounds * 100 + pence,
+      );
+
+      compoundRanges.push({
+        start: startIndex,
+        end:
+          startIndex +
+          match[0].length,
+      });
+    }
+  }
+
+  const overlapsCompoundRange = (
+    match: RegExpMatchArray,
+  ): boolean => {
+    const startIndex = match.index;
+
+    if (startIndex === undefined) {
+      return false;
+    }
+
+    const endIndex =
+      startIndex + match[0].length;
+
+    return compoundRanges.some(
+      (range) =>
+        startIndex < range.end &&
+        endIndex > range.start,
+    );
+  };
+
   const majorPattern =
     /(?:\u00A3\s*|GBP\s*)(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:GBP|pounds?)/giu;
 
   for (const match of text.matchAll(
     majorPattern,
   )) {
+    if (overlapsCompoundRange(match)) {
+      continue;
+    }
+
     const rawAmount =
       match[1] ?? match[2];
 
@@ -568,6 +637,10 @@ function extractClaimedPriceAmounts(
   for (const match of text.matchAll(
     pencePattern,
   )) {
+    if (overlapsCompoundRange(match)) {
+      continue;
+    }
+
     const rawPence =
       match[1];
 
@@ -621,10 +694,12 @@ function hasUnsupportedPriceClaim(
       context.query.normalized,
     );
 
-  return extractClaimedPriceAmounts(
-    text,
-    priceQuery,
-  ).some(
+  const claimed =
+    extractClaimedPriceAmounts(
+      text,
+      priceQuery,
+    );
+  return claimed.some(
     (amount) =>
       !supported.has(amount),
   );
@@ -654,6 +729,7 @@ const RESPONSE_GLUE_TERMS = new Set([
   "includes",
   "is",
   "it",
+  "no",
   "its",
   "of",
   "on",
@@ -666,8 +742,10 @@ const RESPONSE_GLUE_TERMS = new Set([
   "people",
   "pound",
   "pounds",
+  "pence",
   "price",
   "priced",
+  "plus",
   "serve",
   "served",
   "serves",
@@ -677,6 +755,7 @@ const RESPONSE_GLUE_TERMS = new Set([
   "this",
   "to",
   "with",
+  "yes",
   "you",
   "your",
 ]);
@@ -765,6 +844,7 @@ function hasUnsupportedResponseTerm(
     text,
   ).some(
     (term) =>
+      !/^\d+p$/u.test(term) &&
       !grounded.has(term) &&
       !RESPONSE_GLUE_TERMS.has(term),
   );
