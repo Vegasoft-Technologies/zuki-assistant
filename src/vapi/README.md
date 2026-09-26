@@ -87,23 +87,29 @@ parametrelerine dönüştürür ve düz HTTP isteği yapar. `type: function` + `
 Vapi `tool-calls` webhook zarfı bekler; gelecekteki düz REST endpoint'ine uygun
 değildir. Tek özel lookup tool'u vardır; `transferCall` yerleşik telefon eylemidir.
 JSON cevabı modelin tool sonucuna bütün olarak gider; extraction/boolean mapping
-yapılmaz. Beklenen örnek:
+yapılmaz. Canlı server'ın (`src/api/server.ts`, Railway 2026-09-26) gerçek cevapları:
 
 ```json
-{ "status": "transfer_required", "query": "Do you serve sushi?", "source": "local", "text": "I'm not sure about that. Let me transfer you to someone who can help.", "reason": "No source-backed answer was found for the request." }
+{ "response": "On sunday, Zuki's closes at 4 PM.", "status": "answered" }
+{ "response": "I'll put you through to an advisor straight away.", "status": "transfer_required", "originalReason": "I'm not sure about that. Let me transfer you to someone who can help." }
 ```
+
+Server servis sonucundaki `text`'i `response` alanına koyar. Transfer durumlarında
+`response` her zaman sabit transfer cümlesidir, servisin asıl metni `originalReason`'a taşınır.
+500 hatasında `status: "error"` döner.
 
 | status | Sesli davranış |
 | --- | --- |
-| `answered` | `text` aynen okunur, ekleme yapılmaz. |
-| `clarification_required` | `text` netleştirme sorusu olarak okunur; cevap beklenir, yeni lookup yapılır. **Transfer yok.** |
-| `transfer_required` | Önce `text`, sonra sabit cümle ve insana transfer. `not_found` de dahil (bkz. aşağı, wrapper bunu burada üretir). |
-| `unavailable` | Önce `text`, sonra sabit cümle ve insana transfer; üç Claude hata reason'ı da aynı davranır. |
+| `answered` | `response` aynen okunur, ekleme yapılmaz. |
+| `clarification_required` | `response` netleştirme sorusu olarak okunur; cevap beklenir, yeni lookup yapılır. **Transfer yok.** |
+| `transfer_required` | `response` okunmaz, doğrudan transferCall; sabit cümleyi transfer tool'u bir kez söyler. `not_found` de dahil (bkz. aşağı, wrapper bunu burada üretir). |
+| `unavailable` | `transfer_required` ile aynı; `originalReason` ne olursa olsun. |
 
-Sabit cümle: “I'm not sure about that. Let me transfer you to someone who can help.”
-Bu cümle `transferCall.destinations[].message` ile söylenir; prompt ikinci kez
-söylemez. HTTP timeout/hata, geçersiz JSON, bilinmeyen status veya boş text'te
-cevap uydurmadan aynı transfer fallback'i kullanılır. Rezervasyon nazikçe reddedilir,
+Sabit cümle: “I'll put you through to an advisor straight away.” Server'ın transfer
+`response`'u ile birebir aynıdır (test bunu gerçek server üzerinden doğrular), böylece
+arayan tek bir transfer cümlesi duyar. Bu cümle `transferCall.destinations[].message` ile
+söylenir; prompt kendisi söylemez. HTTP timeout/hata, geçersiz JSON, `error` ya da bilinmeyen
+status veya boş `response`'ta cevap uydurmadan aynı transfer fallback'i kullanılır. Rezervasyon nazikçe reddedilir,
 transfer önerilir; onaysız rezervasyon transferi veya booking akışı yoktur.
 
 **Sözleşme kesinleşti (2026-09-19, Esma'nın kararı):** Atiye'nin `/api/lookup` endpoint'i
@@ -120,8 +126,8 @@ bulunamayan her ürün **doğrudan mandatory transfer** tetikliyor (sushi accept
 bekliyor). Bu bir ürün kararı, kodun hatası değil — ama telefon testinde "sushi soruldu, hemen
 insana bağlandı" davranışını beklenen sonuç olarak değerlendir.
 
-- [ ] Atiye'nin endpoint'i dört status'u aynen, boolean'a indirgenmeden, kök JSON'da `status`
-  ve boş olmayan `text` ile HTTP 2xx döner; `unavailable` dahil backend sonuçları korunur.
+- [x] Endpoint dört status'u aynen, boolean'a indirgenmeden, kök JSON'da `status` ve boş
+  olmayan `response` ile HTTP 2xx döner (2026-09-26 canlı curl testiyle doğrulandı).
 - [ ] Tool testinde `query` aynen ulaşır, bütün cevap Vapi loglarında görünür.
 - [ ] Auth gerekiyorsa Vapi credential entegrasyonu ayrıca kararlaştırılır; bu
   geçici sözleşme lookup endpoint'ine auth header göndermez. Vapi private key'i
@@ -142,12 +148,12 @@ prompt kurallarını kontrol eder. Gerçek Vapi hesabı, LLM davranışı, ses s
 ve telefon bağlantısının kanıtı değildir. Bunlar ayrıca test edilmelidir:
 
 - [ ] Sunday closing, Turkish breakfast, vegan, dog, sushi sorularını sor; her
-  faktüel soruda lookup çağrıldığını ve yalnız backend text'inin okunduğunu kontrol et.
+  faktüel soruda lookup çağrıldığını ve yalnız backend `response`'unun okunduğunu kontrol et.
 - [ ] Belirsiz ürün → `clarification_required`: soruyu aynen okur, transfer etmez;
   cevap sonrası aynı görüşmede yeni lookup görülür.
 - [ ] Sushi (bulunamayan ürün) → `transfer_required`: sabit transfer cümlesi bir kez okunur,
   otomatik insana bağlanır (artık ayrı bir `not_found` davranışı yok).
-- [ ] Desteklenmeyen miktar → `transfer_required`: backend text'i tamamlanır,
+- [ ] Desteklenmeyen miktar → `transfer_required`: backend cevabı okunmaz,
   sabit cümle bir kez duyulur, ayrı insan test telefonu çalar ve iki yönlü ses vardır.
 - [ ] Üç `unavailable` reason'ını kontrollü test backend'inde ayrı ayrı tetikle;
   aynı transfer sıralamasını doğrula. Timeout/500/bozuk JSON için de fallback'i dene.
