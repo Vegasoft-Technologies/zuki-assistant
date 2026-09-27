@@ -6,6 +6,10 @@ import {
 } from "../dist/assistant/service.js";
 
 import {
+  createKnowledgeSafeAssistantService,
+} from "../dist/assistant/knowledge-safe-service.js";
+
+import {
   buildMenuContext,
 } from "../dist/context/builder.js";
 
@@ -21,6 +25,11 @@ import {
   createMenuMatcher,
 } from "../dist/matching/matcher.js";
 
+import {
+  buildSourceNameProfile,
+  normalizeMatchText,
+} from "../dist/matching/normalize.js";
+
 const sourceData =
   await loadZukiData();
 
@@ -29,6 +38,414 @@ const normalizedData =
 
 const match =
   createMenuMatcher(normalizedData);
+
+test(
+  "bounded speech fillers preserve missing double letter query forms",
+  async () => {
+    const queries = [
+      "uh do you guys have cappucino please",
+      "um do you guys have cappucino please",
+      "hey do you guys have cappucino",
+      "sorry do you guys have cappucino",
+      "uh do you serve cappucino",
+      "um how much is a cappucino",
+      "uh how much is a capuccino please",
+      "do you guys have cappucino?",
+      "do you guys have capuccino?",
+      "How much is a cappucino?",
+      "How much is a capuccino?",
+    ];
+    const failures = [];
+
+    for (const query of queries) {
+      let calls = 0;
+      const service = createKnowledgeSafeAssistantService(normalizedData, {
+        claudeResponder: async () => {
+          calls += 1;
+          return {
+            text: "The Cappuccino is \u00a33.55.",
+            model: "fake-model",
+            stopReason: "end_turn",
+          };
+        },
+      });
+      const matched = match(query);
+      const result = await service.lookup(query);
+
+      if (
+        matched.status !== "matched" ||
+        matched.candidate.itemName !== "Cappuccino" ||
+        result.status !== "answered" ||
+        calls !== 1
+      ) {
+        failures.push({ query, match: matched.status, status: result.status, calls });
+      }
+      assert.equal(matched.normalizedQuery, normalizeMatchText(query));
+    }
+    assert.deepEqual(failures, []);
+  },
+);
+
+test(
+  "speech fillers do not broaden typo edits products or ambiguity",
+  () => {
+    for (const filler of ["uh", "um", "hey", "sorry"]) {
+      for (const product of [
+        "late", "eg", "sushi", "unicorn soup", "cappaccino", "capucino",
+        "cappucccino", "cappucicno", "cappuccin", "cappucino sushi",
+        "iced cappucino", "cappucino lobster", "Turkish breakfest",
+      ]) {
+        const query = `${filler} do you guys have ${product} please`;
+        assert.equal(match(query).status, "unknown", query);
+      }
+
+      const query = `${filler} do you have afogato please`;
+      const expected = match("afogato");
+      const result = match(query, { sectionHint: "Sundaes" });
+
+      assert.equal(result.status, "ambiguous", query);
+      assert.deepEqual(
+        result.candidates.map((candidate) => candidate.itemId),
+        expected.candidates.map((candidate) => candidate.itemId),
+      );
+    }
+
+    for (const query of [
+      "uh um do you have cappucino please",
+      "well do you have cappucino please",
+      "do you uh have cappucino please",
+      "uh do you have cappucino please please",
+      "uh cappucino please",
+    ]) {
+      assert.equal(match(query).status, "unknown", query);
+    }
+
+    const exact = match("uh do you have cappucino and Latte please");
+    assert.equal(exact.status, "matched");
+    assert.equal(exact.candidate.itemName, "Latte");
+  },
+);
+
+test(
+  "spelling and speech variants follow exact and bounded fallback rules",
+  () => {
+    const accepted = [
+      "cappuccino", "cappucino", "capuccino", "CAPPUCCINO", "Cappuccino!!!",
+      "  cappuccino  ", "cappuccino cappuccino", "uh cappuccino please",
+      "do you guys have cappucino", "how much is cappucino",
+      "noise cappuccino noise", "cappu'ccino", "cappu\u2019ccino",
+      "\uFF43\uFF41\uFF50\uFF50\uFF55\uFF43\uFF43\uFF49\uFF4E\uFF4F",
+      "cappuccin\u006F\u0301", "\u201CCappuccino\u201D",
+    ];
+    const rejected = [
+      "cappaccino", "cappuchino", "capucino", "cappuccinooo", "cappu ccino",
+      "cappu-cino", "uh cappucino please", "cappucccino", "cappucicno",
+      "cappuccinos", "cappuccin", "cappuccinxo", "sushi", "late", "mocho",
+      "americani", "cappu\u200Bccino", "cappu\u200Dccino", "c\u0430ppuccino",
+    ];
+
+    for (const query of accepted) {
+      const result = match(query);
+
+      assert.equal(result.status, "matched", query);
+      assert.equal(result.candidate.itemName, "Cappuccino", query);
+    }
+    for (const query of rejected) {
+      assert.equal(match(query).status, "unknown", query);
+    }
+  },
+);
+
+test(
+  "every source name and all one-character mutations preserve fallback boundaries",
+  () => {
+    const rows = normalizedData.menu.flatMap(
+      (section) => section.items.map((item) => ({
+        item,
+        section: section.section,
+        profile: buildSourceNameProfile(item.name),
+      })),
+    );
+    const phrases = rows.flatMap(
+      (row) => row.profile.normalizedSourceDerivedPhrases,
+    );
+    const allowedFallbacks = new Map();
+
+    for (const row of rows) {
+      const result = match(row.item.name, { sectionHint: row.section });
+
+      assert.equal(result.status, "matched", row.item.name);
+      assert.equal(result.candidate.itemId, row.item.item_id, row.item.name);
+
+      const name = row.profile.normalizedName;
+
+      if (!/^[a-z]{8,}$/u.test(name)) {
+        continue;
+      }
+      for (let offset = 1; offset < name.length; offset += 1) {
+        if (name[offset] === name[offset - 1]) {
+          const variant = name.slice(0, offset) + name.slice(offset + 1);
+          const ids = allowedFallbacks.get(variant) ?? new Set();
+
+          ids.add(row.item.item_id);
+          allowedFallbacks.set(variant, ids);
+        }
+      }
+    }
+
+    const queries = new Set();
+
+    for (const row of rows) {
+      const name = row.profile.normalizedName;
+
+      queries.add(`${name}s`);
+      for (let offset = 0; offset < name.length; offset += 1) {
+        queries.add(name.slice(0, offset) + name.slice(offset + 1));
+        queries.add(name.slice(0, offset) + name[offset] + name.slice(offset));
+        queries.add(name.slice(0, offset) + "x" + name.slice(offset));
+        queries.add(name.slice(0, offset) + "x" + name.slice(offset + 1));
+        if (offset + 1 < name.length) {
+          queries.add(
+            name.slice(0, offset) + name[offset + 1] + name[offset] + name.slice(offset + 2),
+          );
+        }
+      }
+    }
+
+    for (const query of queries) {
+      const normalized = normalizeMatchText(query);
+      const hasExact = phrases.some(
+        (phrase) => ` ${normalized} `.includes(` ${phrase} `),
+      );
+
+      if (hasExact) {
+        continue;
+      }
+
+      const expected = allowedFallbacks.get(normalized);
+      const result = match(query);
+
+      if (expected === undefined) {
+        assert.equal(result.status, "unknown", query);
+      } else if (expected.size === 1) {
+        assert.equal(result.status, "matched", query);
+        assert.ok(expected.has(result.candidate.itemId), query);
+      } else {
+        assert.equal(result.status, "ambiguous", query);
+        assert.deepEqual(
+          new Set(result.candidates.map((candidate) => candidate.itemId)),
+          expected,
+          query,
+        );
+      }
+    }
+  },
+);
+
+test(
+  "missing double letters match only long single-word products in simple queries",
+  () => {
+    for (const spelling of [
+      "cappucino",
+      "capuccino",
+      "cappuccino",
+    ]) {
+      for (const query of [
+        spelling,
+        `do you guys have ${spelling}?`,
+        `how much is a ${spelling}`,
+        `Do you serve ${spelling}, please?`,
+      ]) {
+        const result = match(query);
+
+        assert.equal(
+          result.status,
+          "matched",
+          query,
+        );
+        assert.equal(
+          result.candidate.itemName,
+          "Cappuccino",
+          query,
+        );
+        assert.equal(
+          result.normalizedQuery.includes(spelling),
+          true,
+        );
+      }
+    }
+  },
+);
+
+test(
+  "typo fallback rejects substitutions short names and compound unknown products",
+  () => {
+    const queries = [
+      "cappaccino",
+      "cappuchino",
+      "cappuccina",
+      "capucino",
+      "chocolata",
+      "americani",
+      "late",
+      "latt",
+      "mocho",
+      "eg",
+      "sushi",
+      "unicorn soup",
+      "cappucino sushi",
+      "iced cappucino",
+      "cappucino lobster",
+      "cappucino prosciuto",
+      "Turkish breakfest",
+    ];
+
+    for (const query of queries) {
+      assert.equal(
+        match(query).status,
+        "unknown",
+        query,
+      );
+    }
+  },
+);
+
+test(
+  "missing double letter candidates stay ambiguous even with a section hint",
+  () => {
+    for (const options of [
+      {},
+      { sectionHint: "Sundaes" },
+    ]) {
+      const result =
+        match("afogato", options);
+
+      assert.equal(
+        result.status,
+        "ambiguous",
+      );
+      assert.equal(
+        result.candidates.length,
+        2,
+      );
+    }
+
+    const data =
+      structuredClone(normalizedData);
+    const section = data.menu.find(
+      (entry) => entry.section === "Caffetteria",
+    );
+    const item = section.items.find(
+      (entry) => entry.name === "Cappuccino",
+    );
+
+    section.items.push({
+      ...structuredClone(item),
+      name: "Cappucinno",
+      item_id: "nearby-product",
+    });
+
+    const result =
+      createMenuMatcher(data)("cappucino");
+
+    assert.equal(
+      result.status,
+      "ambiguous",
+    );
+    assert.deepEqual(
+      new Set(result.candidates.map(
+        (candidate) => candidate.itemName,
+      )),
+      new Set(["Cappuccino", "Cappucinno"]),
+    );
+  },
+);
+
+test(
+  "exact source phrases take precedence over missing double letter candidates",
+  () => {
+    const data =
+      structuredClone(normalizedData);
+    const section = data.menu.find(
+      (entry) => entry.section === "Caffetteria",
+    );
+    const item = section.items.find(
+      (entry) => entry.name === "Cappuccino",
+    );
+
+    section.items.push({
+      ...structuredClone(item),
+      name: "Cappucino",
+      item_id: "exact-product",
+    });
+
+    const localMatch = createMenuMatcher(data);
+
+    for (const name of ["Cappucino", "Cappuccino"]) {
+      const result = localMatch(`Do you have ${name}?`);
+
+      assert.equal(
+        result.status,
+        "matched",
+      );
+      assert.equal(
+        result.candidate.itemName,
+        name,
+      );
+    }
+  },
+);
+
+test(
+  "missing double letter variants preserve the actual menu corpus and its ambiguity",
+  () => {
+    const items = normalizedData.menu.flatMap(
+      (section) => section.items,
+    );
+    const variants = new Map();
+
+    for (const item of items) {
+      const name = item.name.toLowerCase();
+
+      if (!/^[a-z]{8,}$/u.test(name)) {
+        continue;
+      }
+
+      for (let offset = 1; offset < name.length; offset += 1) {
+        if (name[offset] !== name[offset - 1]) {
+          continue;
+        }
+
+        const variant =
+          name.slice(0, offset) + name.slice(offset + 1);
+        const candidates = variants.get(variant) ?? new Set();
+
+        candidates.add(item.item_id);
+        variants.set(variant, candidates);
+      }
+    }
+
+    assert.equal(variants.size, 8);
+
+    for (const [variant, candidates] of variants) {
+      const result = match(variant);
+
+      if (candidates.size === 1) {
+        assert.equal(result.status, "matched", variant);
+        assert.ok(candidates.has(result.candidate.itemId), variant);
+      } else {
+        assert.equal(result.status, "ambiguous", variant);
+        assert.deepEqual(
+          new Set(result.candidates.map(
+            (candidate) => candidate.itemId,
+          )),
+          candidates,
+          variant,
+        );
+      }
+    }
+  },
+);
 
 test(
   "Doppio is matched from a natural-language query",

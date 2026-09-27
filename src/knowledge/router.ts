@@ -11,6 +11,7 @@ export interface KnowledgeResult {
   status: KnowledgeStatus;
   topic?:
     | "opening_hours"
+    | "location"
     | "vegan"
     | "dog"
     | "parking"
@@ -419,11 +420,15 @@ export function lookupBusinessKnowledge(
   const query =
     normalizeQuery(rawQuery);
 
+  const asksLocation =
+    /\b(?:where are you located|your (?:address|location))\b|\bwhere are you(?=$|\s+(?:and|i|we)\b)/u.test(query);
+
   const businessIntents = [
     query.includes("open") ||
       query.includes("close") ||
       query.includes("opening hour") ||
       query.includes("closing hour"),
+    asksLocation,
     query.includes("vegan"),
     hasWholePhrase(query, "dog") ||
       hasWholePhrase(query, "dogs"),
@@ -443,6 +448,14 @@ export function lookupBusinessKnowledge(
       status: "transfer_required",
       reason:
         "The request combines multiple intents that cannot be answered safely from a single verified fact.",
+    };
+  }
+
+  if (asksLocation) {
+    return {
+      status: "known",
+      topic: "location",
+      answer: data.business.address,
     };
   }
 

@@ -22,6 +22,10 @@ import {
   createMenuMatcher,
 } from "../matching/matcher.js";
 
+import {
+  normalizeMatchText,
+} from "../matching/normalize.js";
+
 export type ClaudeResponder = (
   context: MenuItemContext,
 ) => Promise<ClaudeAnswer>;
@@ -531,6 +535,9 @@ function extractClaimedPriceAmounts(
   text: string,
   includeBareDecimals: boolean,
 ): number[] {
+  const normalizedText =
+    text.normalize("NFKC");
+
   const amounts = new Set<number>();
 
   const compoundRanges: Array<{
@@ -554,7 +561,7 @@ function extractClaimedPriceAmounts(
   const compoundPoundsPattern =
     /\b(\d+)\s*pounds?\s*(?:and\s*)?(\d{1,2})(?:\s*(?:p|pence)\b|(?=\s*(?:[.,!?;:]|$|\beach\b|\bper\b|\bfor\b)))/giu;
 
-  for (const match of text.matchAll(
+  for (const match of normalizedText.matchAll(
     compoundPoundsPattern,
   )) {
     const rawPounds = match[1];
@@ -614,7 +621,7 @@ function extractClaimedPriceAmounts(
   const majorPattern =
     /(?:\u00A3\s*|GBP\s*)(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:GBP|pounds?)/giu;
 
-  for (const match of text.matchAll(
+  for (const match of normalizedText.matchAll(
     majorPattern,
   )) {
     if (overlapsCompoundRange(match)) {
@@ -634,7 +641,7 @@ function extractClaimedPriceAmounts(
   const pencePattern =
     /\b(\d+)\s*(?:p|pence)\b/giu;
 
-  for (const match of text.matchAll(
+  for (const match of normalizedText.matchAll(
     pencePattern,
   )) {
     if (overlapsCompoundRange(match)) {
@@ -663,7 +670,7 @@ function extractClaimedPriceAmounts(
     const decimalPattern =
       /\b(\d+[.,]\d{1,2})\b/gu;
 
-    for (const match of text.matchAll(
+    for (const match of normalizedText.matchAll(
       decimalPattern,
     )) {
       const rawAmount =
@@ -680,10 +687,38 @@ function extractClaimedPriceAmounts(
   return [...amounts];
 }
 
+function hasNoncanonicalDecimalDigits(
+  value: string,
+): boolean {
+  return /\p{Nd}/u.test(
+    value.normalize("NFKC").replace(/[0-9]/gu, ""),
+  );
+}
+
+export function hasUnsafeQueryCharacters(
+  query: string,
+): boolean {
+  const letters =
+    query.normalize("NFKD").match(/\p{L}/gu) ?? [];
+
+  return (
+    /\p{Cf}/u.test(query) ||
+    hasNoncanonicalDecimalDigits(query) ||
+    letters.some((letter) =>
+      !/\p{Script=Latin}/u.test(letter) ||
+      normalizeMatchText(letter).length === 0,
+    )
+  );
+}
+
 function hasUnsupportedPriceClaim(
   context: MenuItemContext,
   text: string,
 ): boolean {
+  if (hasNoncanonicalDecimalDigits(text)) {
+    return true;
+  }
+
   const supported =
     collectSupportedPriceAmounts(
       context,
@@ -699,6 +734,11 @@ function hasUnsupportedPriceClaim(
       text,
       priceQuery,
     );
+
+  if (/^(?:yes(?: it is)?|correct|thats right|that is correct)$/u.test(normalizeMatchText(text))) {
+    claimed.push(...extractClaimedPriceAmounts(context.query.raw, true));
+  }
+
   return claimed.some(
     (amount) =>
       !supported.has(amount),
@@ -709,29 +749,38 @@ const RESPONSE_GLUE_TERMS = new Set([
   "an",
   "and",
   "answer",
+  "appears",
   "are",
   "as",
   "at",
   "be",
   "by",
+  "can",
   "come",
+  "could",
   "comes",
   "contain",
   "contains",
   "cost",
   "costs",
+  "do",
+  "find",
   "for",
   "from",
   "has",
   "have",
+  "here",
   "in",
   "include",
   "includes",
   "is",
   "it",
+  "listed",
   "no",
   "its",
   "of",
+  "offer",
+  "offers",
   "on",
   "option",
   "options",
@@ -749,11 +798,13 @@ const RESPONSE_GLUE_TERMS = new Set([
   "serve",
   "served",
   "serves",
+  "there",
   "serving",
   "servings",
   "the",
   "this",
   "to",
+  "we",
   "with",
   "yes",
   "you",
@@ -824,8 +875,30 @@ function hasUnsupportedResponseTerm(
   context: MenuItemContext,
   text: string,
 ): boolean {
+  const confirmationLeadIn =
+    /^\s*yes\s*,?\s+(?:that['\u2019]s|that is)\s+correct\b/iu;
+  let groundingText = text;
+
+  if (confirmationLeadIn.test(text.normalize("NFKC"))) {
+    const queryPrices = extractClaimedPriceAmounts(context.query.raw, true);
+    const supportedPrices = collectSupportedPriceAmounts(context);
+    const asksConfirmation =
+      /\b(?:right|correct)$|^(?:is|does)\b/u.test(context.query.normalized);
+
+    if (
+      !asksConfirmation ||
+      queryPrices.length === 0 ||
+      queryPrices.some((amount) => !supportedPrices.has(amount))
+    ) {
+      return true;
+    }
+
+    groundingText = text.normalize("NFKC").replace(confirmationLeadIn, "");
+  }
+
   const grounded =
     new Set<string>();
+  const response = normalizeMatchText(text);
 
   collectGroundingTerms(
     context.business,
@@ -836,12 +909,54 @@ function hasUnsupportedResponseTerm(
     grounded,
   );
   collectGroundingTerms(
-    context.section,
+    {
+      name: context.section.name,
+      note: context.section.note,
+      siteHeading: context.section.siteHeading,
+      pricing: context.section.pricing,
+      extras: context.section.extras?.pricing_options.filter(
+        (option) =>
+          !/\b(?:contains?|includes?|has|comes? with)\b/u.test(response) &&
+          option.qualifiers.variant !== undefined &&
+          queryHasPricingSelector(
+            context.query.normalized,
+            option.qualifiers.variant,
+          ),
+      ),
+    },
     grounded,
   );
 
+  const responseWithoutConfirmation =
+    normalizeMatchText(
+      text.normalize("NFKC").replace(
+        /^\s*no\s*[,.:;!?]\s*/iu,
+        "",
+      ),
+    );
+  const itemTerms = new Set<string>();
+
+  collectGroundingTerms(context.item, itemTerms);
+
+  if (
+    /\bno\b/u.test(responseWithoutConfirmation) ||
+    (/\bfor here\b/u.test(response) &&
+      !context.item.pricing.options.some(
+        (option) => option.qualifiers.service_mode !== undefined,
+      )) ||
+    (/\bper\s+(?:person|head)\b/u.test(response) &&
+      !/\bper\s+(?:person|head)\b/u.test(
+        normalizeMatchText(context.item.rawPriceText),
+      )) ||
+    (/\b(?:person|people)\b/u.test(response) &&
+      !itemTerms.has("person") &&
+      !itemTerms.has("people"))
+  ) {
+    return true;
+  }
+
   return extractGroundingTerms(
-    text,
+    groundingText,
   ).some(
     (term) =>
       !/^\d+p$/u.test(term) &&
@@ -849,6 +964,248 @@ function hasUnsupportedResponseTerm(
       !RESPONSE_GLUE_TERMS.has(term),
   );
 }
+function hasUnsupportedResponseFormatting(
+  text: string,
+): boolean {
+  const normalized =
+    text.normalize("NFKC");
+
+  return (
+    /[`*_~<>\[\]\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(normalized) ||
+    /^\s*(?:#+|[-+]\s|\d+[.)]\s)/mu.test(
+      normalized,
+    ) ||
+    /^\s*(?:=+|-+)\s*$/mu.test(
+      normalized,
+    ) ||
+    /[\p{So}\p{Emoji_Modifier}\u00B7\u200D\u20E3\uFE0E\uFE0F\u2022\u2023\u2027\u2043\u204C\u204D\u2218\u2219]/u.test(
+      normalized,
+    )
+  );
+}
+
+export function requiresLiveAvailabilityVerification(
+  normalizedQuery: string,
+  itemName: string = "",
+  staticOptionKinds: readonly string[] = [],
+): boolean {
+  const query =
+    normalizedQuery.replace(
+      /\b(?:available|left|remaining)\s+(?:on|in)\s+(?:the\s+)?menu\b/gu,
+      "on the menu",
+    ).replace(
+      /\b(options|sizes|variants)\s+are\s+available\b/gu,
+      (phrase, kind: string) =>
+        staticOptionKinds.includes(kind) ? `${kind} on the menu` : phrase,
+    );
+
+  const explicitLiveStock =
+    /\b(?:in stock|out of stock|stock level|sold out|run out)\b/u.test(
+      query,
+    );
+
+  const currentTimeCue =
+    /\b(?:right now|now|today|currently|at (?:the|this) moment|at present|presently|this minute|immediately|straight away|on hand)\b/u.test(query);
+
+  const temporalAvailability =
+    currentTimeCue &&
+    /\b(?:available|availability)\b/u.test(
+      query,
+    );
+
+  const temporalAcquisition =
+    currentTimeCue &&
+    /\b(?:have|got|serve|serving|get|order|buy)\b/u.test(
+      query,
+    );
+
+  const stillAvailable =
+    /\bstill\s+(?:have|got)\b/u.test(
+      query,
+    );
+
+  const bareAvailability =
+    /\bavailable\b/u.test(
+      query,
+    );
+
+  const remainingStock =
+    (
+      /\b(?:have|got|any|anything|enough|plenty|there)\b.{0,64}\b(?:left|remaining)\b/u.test(
+        query,
+      ) ||
+      /\bremaining\b/u.test(query) ||
+      /\b(?:left|remaining)\b.{0,64}\b(?:have|got|any|there)\b/u.test(
+        query,
+      )
+    ) &&
+    !/\b(?:left|remaining)\s+(?:on|in)\s+(?:the\s+)?menu\b/u.test(
+      query,
+    );
+
+  const depletedStock =
+    /\b(?:are|is)\s+(?:you|there)\b.{0,24}\b(?:(?:completely|almost|nearly)\s+)?out of\b/u.test(
+      query,
+    ) &&
+    !/\bout of\s+(?:curiosity|interest)\b/u.test(
+      query,
+    );
+
+  const depletingStock =
+    /\b(?:running|getting)\s+low\b/u.test(
+      query,
+    ) ||
+    /\blow\s+on\b/u.test(
+      query,
+    ) ||
+    /\b(?:selling|running)\s+out\b/u.test(
+      query,
+    ) ||
+    /\bsells?\s+out\b/u.test(
+      query,
+    ) ||
+    /\b(?:nearly|almost)\s+gone\b/u.test(
+      query,
+    ) ||
+    /\b(?:nearly|almost)\s+out\b/u.test(query) ||
+    /\b(?:is|are)\b.{0,48}\blow(?:\s+on\s+stock)?$/u.test(
+      query,
+    );
+
+  const stillLiveAvailability =
+    /\bstill\s+available\b/u.test(
+      query,
+    ) &&
+    !/\bstill\s+available\s+(?:on|in)\s+(?:the\s+)?menu\b/u.test(
+      query,
+    );
+
+  const abbreviatedCurrentAvailability =
+    /\brn\b/u.test(query) &&
+    /\b(?:have|got|available|stock|get|order|serve|serving)\b/u.test(
+      query,
+    );
+
+  const futureTimeCue =
+    /\b(?:tonight|later(?:\s+today)?|tomorrow)\b/u.test(query) ||
+    /\bwhen\s+(?:i|we)\s+(?:arrive|get\s+there|come\s+in|stop\s+by|visit)\b/u.test(
+      query,
+    ) ||
+    /\bin\s+(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d+|half\s+an?|a\s+couple\s+of)\s+(?:min(?:ute)?s?|hours?)\b/u.test(
+      query,
+    ) ||
+    /\b(?:this|next)\s+(?:morning|afternoon|evening|weekend|week|month)\b/u.test(
+      query,
+    ) ||
+    /\b(?:on|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u.test(
+      query,
+    ) ||
+    /\b(?:at|around|by|before|after)\s+(?:\d{1,2}(?:\s+\d{2})?(?:\s*(?:am|pm))?|noon|lunchtime|midnight)\b/u.test(
+      query,
+    );
+
+  const futureAvailability =
+    futureTimeCue &&
+    /\b(?:have|got|available|get|order|buy|serve|serving)\b/u.test(
+      query,
+    );
+
+  const futureAcquisition =
+    /\bwill\s+(?:you|we|i)\s+(?:have|get|serve|buy)\b/u.test(query) ||
+    /\b(?:will|would|could)\b.{0,64}\bbe\s+(?:available|on\s+(?:the\s+)?menu)\b/u.test(query) ||
+    /\b(?:will|would|could)\s+there\s+be\b/u.test(query) ||
+    /\b(?:going|expect(?:ing)?|plan(?:ning)?)\s+to\s+(?:have|serve|stock|offer)\b/u.test(query);
+
+  const historicalMenuClaim =
+    /\bdid\s+you\s+(?:have|serve|sell|offer|stock)\b/u.test(query) ||
+    /\b(?:was|were)\b.{0,64}\b(?:on the menu|available)\b/u.test(query);
+
+  const temporalPriceClaim =
+    /\b(?:price|cost|costs|much|\d+)\b/u.test(query) &&
+    (
+      /\b(?:will|would|was|were|did)\b.{0,64}\b(?:cost|price|priced|\d+)\b/u.test(query) ||
+      /\b(?:yesterday|last (?:week|month|year))\b/u.test(query) ||
+      (futureTimeCue && !/\bfor later\b/u.test(query))
+    );
+
+  const temporalOptionAvailability =
+    (futureTimeCue || currentTimeCue) &&
+    /\b(?:options|sizes|variants)\s+are\s+available\b/u.test(normalizedQuery);
+
+  const abbreviatedTimeAvailability =
+    itemName.length > 0 &&
+    (futureTimeCue || currentTimeCue) &&
+    !/\b(?:had|was|were|did|price|cost|costs|much|menu)\b/u.test(query);
+
+  const availabilityCommitment =
+    /\bguarantee\b/u.test(query) ||
+    /\bmake\s+sure\b.{0,64}\bavailable\b/u.test(
+      query,
+    ) ||
+    /\bdefinitely\s+(?:get|have|order)\b/u.test(
+      query,
+    );
+
+  const operationalHoldRequest =
+    /\b(?:save|hold|reserve)\b/u.test(
+      query,
+    ) ||
+    /\b(?:put|set)\b.{0,64}\baside\b/u.test(
+      query,
+    ) ||
+    /\bkeep\b.{0,64}\bfor\s+(?:me|us)\b/u.test(
+      query,
+    );
+
+  const explicitRemainingQuantity =
+    /\b(?:only|just)\s+(?:one|two|three|\d+)\b.{0,48}\bleft\b/u.test(
+      query,
+    ) ||
+    /\bhow\s+much\b.{0,64}\bleft\b/u.test(
+      query,
+    ) ||
+    /\bhow\s+many\b.{0,64}\b(?:left|remaining|have)\b/u.test(query) ||
+    /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+|a\s+few|some)\s+left\b/u.test(
+      query,
+    );
+
+  const lastUnitStock =
+    /\b(?:is|are)\s+(?:this|that|it)\s+(?:the\s+)?last\b/u.test(
+      query,
+    ) ||
+    /\b(?:the\s+)?last\b.{0,48}\bleft\b/u.test(
+      query,
+    ) ||
+    /\blast\s+one\b/u.test(query) ||
+    (itemName.length > 0 &&
+      query.includes(`last ${normalizeMatchText(itemName)}`) &&
+      !/\b(?:had|was|time)\b/u.test(query)
+    );
+
+  return (
+    historicalMenuClaim ||
+    temporalPriceClaim ||
+    explicitLiveStock ||
+    temporalAvailability ||
+    temporalAcquisition ||
+    stillAvailable ||
+    bareAvailability ||
+    remainingStock ||
+    depletedStock ||
+    depletingStock ||
+    stillLiveAvailability ||
+    abbreviatedCurrentAvailability ||
+    futureAvailability ||
+    temporalOptionAvailability ||
+    futureAcquisition ||
+    abbreviatedTimeAvailability ||
+    availabilityCommitment ||
+    operationalHoldRequest ||
+    explicitRemainingQuantity ||
+    lastUnitStock
+  );
+}
+
 function createMatchedItem(
   context: MenuItemContext,
 ): AssistantMatchedItem {
@@ -929,6 +1286,34 @@ export function createAssistantService(
         );
 
       if (
+        hasUnsafeQueryCharacters(query) ||
+        requiresLiveAvailabilityVerification(
+          context.query.normalized,
+          context.item.name,
+          [
+            "options",
+            ...(context.item.pricing.options.some((option) =>
+              option.qualifiers.size !== undefined,
+            ) ? ["sizes"] : []),
+            ...(context.item.pricing.options.some((option) =>
+              option.qualifiers.variant !== undefined,
+            ) ? ["variants"] : []),
+          ],
+        )
+      ) {
+        return {
+          status: "transfer_required",
+          query,
+          source: "local",
+          text:
+            "The current menu does not establish the requested availability or time-specific menu facts.",
+          reason:
+            "The request cannot be verified from current menu information.",
+          item,
+        };
+      }
+
+      if (
         requiresUnsupportedQuantityPricing(
           context,
         )
@@ -1001,6 +1386,9 @@ export function createAssistantService(
       if (
         hasUnsupportedResponseTerm(
           context,
+          claudeAnswer.text,
+        ) ||
+        hasUnsupportedResponseFormatting(
           claudeAnswer.text,
         )
       ) {

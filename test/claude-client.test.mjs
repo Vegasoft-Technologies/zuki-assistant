@@ -562,3 +562,48 @@ test(
     );
   },
 );
+
+test(
+  "Claude prompt treats matched-item presence separately from live stock",
+  () => {
+    const prompt =
+      buildClaudePromptPayload(
+        doppioContext,
+      );
+
+    assert.match(
+      prompt.system,
+      /asks whether X appears on the verified menu, not whether it is in live stock\./,
+    );
+
+    assert.match(
+      prompt.system,
+      /Answer only the menu-presence question; do not add price, ingredients, options, or other details unless the customer asks for them\./,
+    );
+  },
+);
+
+test(
+  "Claude prompt requires voice-safe plain text output",
+  () => {
+    const prompt =
+      buildClaudePromptPayload(
+        doppioContext,
+      );
+
+    assert.match(
+      prompt.system,
+      /Use plain sentence text suitable for text-to-speech\./,
+    );
+
+    assert.match(
+      prompt.system,
+      /Do not use emojis, Markdown formatting, bullet points, or decorative characters\./,
+    );
+
+    assert.match(
+      prompt.system,
+      /Preserve ordinary punctuation and source-backed currency symbols when relevant\./,
+    );
+  },
+);
