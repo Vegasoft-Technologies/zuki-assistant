@@ -20,6 +20,41 @@ const normalizedData =
   transformZukiData(sourceData);
 
 test(
+  "STEP3 regression: bundle responses preserve verified quantity and price pairs",
+  async () => {
+    const cases = [
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a329.95 for 2 people, or \u00a352.95 for 4 people.", "answered"],
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a329.95 for 3 people.", "unavailable"],
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a352.95 for 2 people.", "unavailable"],
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a329.95 per person.", "unavailable"],
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a314.98 per person.", "unavailable"],
+      ["How much is cappuccino?", "Cappuccino is \u00a33.55 per person.", "unavailable"],
+      ["How much is the Turkish breakfast?", "The Turkish Breakfast Spread is \u00a329.95 for 2 people and \u00a352.95 for 5 people.", "unavailable"],
+    ];
+    const failures = [];
+
+    for (const [query, text, expected] of cases) {
+      let calls = 0;
+      const service = createKnowledgeSafeAssistantService(normalizedData, {
+        claudeResponder: async () => {
+          calls += 1;
+          return { text, model: "fake-model", stopReason: "end_turn" };
+        },
+      });
+      const result = await service.lookup(query);
+
+      if (result.status !== expected || calls !== 1) {
+        failures.push({ query, text, expected, status: result.status, calls });
+      }
+      if (result.status === "answered") {
+        assert.equal(result.text, text);
+      }
+    }
+    assert.deepEqual(failures, []);
+  },
+);
+
+test(
   "STEP3 safety: explicit business and menu questions transfer across topics and unknown items",
   async () => {
     const queries = [
