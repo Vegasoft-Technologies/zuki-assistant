@@ -871,6 +871,29 @@ function collectGroundingTerms(
   }
 }
 
+function hasSupportedBundlePeopleClaims(
+  context: MenuItemContext,
+  text: string,
+): boolean {
+  const normalized = text.normalize("NFKC");
+  const peopleTerms = normalized.match(/\b(?:person|people)\b/giu) ?? [];
+  const pairs = [...normalized.matchAll(
+    /(?:\u00a3|\bGBP)\s*(\d+(?:[.,]\d{1,2})?)\s+for\s+(\d+)\s+(?:person|people)\b/giu,
+  )];
+
+  return (
+    peopleTerms.length > 0 &&
+    pairs.length === peopleTerms.length &&
+    pairs.every((pair) =>
+      context.item.pricing.options.some((option) =>
+        option.kind === "bundle" &&
+        option.qualifiers.quantity === Number(pair[2]) &&
+        option.amount_minor === parseClaimedMajorAmount(pair[1] ?? ""),
+      ),
+    )
+  );
+}
+
 function hasUnsupportedResponseTerm(
   context: MenuItemContext,
   text: string,
@@ -950,7 +973,8 @@ function hasUnsupportedResponseTerm(
       )) ||
     (/\b(?:person|people)\b/u.test(response) &&
       !itemTerms.has("person") &&
-      !itemTerms.has("people"))
+      !itemTerms.has("people") &&
+      !hasSupportedBundlePeopleClaims(context, text))
   ) {
     return true;
   }
