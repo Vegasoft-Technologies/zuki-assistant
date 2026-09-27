@@ -5,6 +5,8 @@ import type {
 
 import {
   createAssistantService,
+  hasUnsafeQueryCharacters,
+  requiresLiveAvailabilityVerification,
 } from "./service.js";
 
 import type {
@@ -18,6 +20,10 @@ import type {
 import {
   createMenuMatcher,
 } from "../matching/matcher.js";
+
+import {
+  normalizeMatchText,
+} from "../matching/normalize.js";
 
 import type {
   KnowledgeResult,
@@ -83,22 +89,115 @@ export function createKnowledgeSafeAssistantService(
       query: string,
       matchOptions: MatchOptions = {},
     ): Promise<KnowledgeSafeResult> {
+      if (hasUnsafeQueryCharacters(query)) {
+        return {
+          status: "transfer_required",
+          query,
+          source: "local",
+          text: TRANSFER_TEXT,
+          reason:
+            "The request contains characters that cannot be interpreted safely.",
+        };
+      }
+
       const knowledge =
         lookupBusinessKnowledge(
           data,
           query,
         );
 
+      const menuMatch = menuMatcher(query, matchOptions);
+      const normalizedQuery = normalizeMatchText(query);
+      const coordinatedRequest = normalizedQuery.match(
+        /^(?:do you(?: guys)? (?:have|serve|sell)|how much (?:is|are)) (?:a |an |the )?(.+?) (?:and|or) (.+)$/u,
+      );
+      const firstProduct = coordinatedRequest?.[1];
+      const secondRequest = coordinatedRequest?.[2];
+      let unsupportedSecondProduct = false;
+
+      if (
+        menuMatch.status === "matched" &&
+        firstProduct === menuMatch.candidate.normalizedMatchedPhrase &&
+        secondRequest !== undefined
+      ) {
+        const secondProduct = secondRequest.replace(
+          /^(?:do you(?: guys)? (?:have|serve|sell)|how much (?:is|are))\s+/u,
+          "",
+        ).replace(/^(?:a|an|the)\s+/u, "").replace(/\s+please$/u, "");
+        const explicitSecondQuestion = secondProduct !== secondRequest;
+
+        unsupportedSecondProduct =
+          (explicitSecondQuestion || /^[a-z]+$/u.test(secondProduct)) &&
+          !/^(?:it|this|that|these|those|them|one|please|thanks)$/u.test(secondProduct) &&
+          menuMatcher(secondProduct, matchOptions).status === "unknown";
+      }
+
+      const explicitMenuQuestion =
+        /\band\s+(?:do you(?: guys)? (?:have|serve|sell)|how much (?:is|are)|what(?:s| is) the price)\b/u.test(normalizedQuery);
+
+      if (
+        unsupportedSecondProduct ||
+        (knowledge.status === "known" &&
+          ["location", "card", "parking", "dog", "opening_hours"].includes(knowledge.topic ?? "") &&
+          explicitMenuQuestion)
+      ) {
+        return {
+          status: "transfer_required",
+          query,
+          source: "local",
+          text: TRANSFER_TEXT,
+          reason:
+            "The combined requests cannot be answered safely from a single verified fact.",
+        };
+      }
+
+      if (knowledge.status === "known") {
+        if (
+          (menuMatch.status === "matched" || knowledge.topic === "vegan") &&
+          query.split(/[!?;\n]+|(?<!\d)\.(?!\d)/u).some((clause) => {
+            const clauseMatch = menuMatcher(clause, matchOptions);
+            let itemPhrase = "";
+
+            if (clauseMatch.status === "matched") {
+              itemPhrase = clauseMatch.candidate.matchedPhrase;
+            } else if (knowledge.topic === "vegan") {
+              itemPhrase = "vegan";
+            } else if (
+              menuMatch.status === "matched" &&
+              lookupBusinessKnowledge(data, clause).status === "no_match"
+            ) {
+              itemPhrase = menuMatch.candidate.matchedPhrase;
+            }
+
+            const normalizedClause = normalizeMatchText(clause);
+            const availabilityQuery = knowledge.topic === "opening_hours"
+              ? normalizedClause.replace(
+                  /^(?:(?:(?:what time|when)\s+)?(?:are|do) you|is the cafe)\s+(?:open|close)\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u,
+                  "",
+                ).trim()
+              : normalizedClause;
+
+            return requiresLiveAvailabilityVerification(
+              availabilityQuery,
+              itemPhrase,
+            );
+          })
+        ) {
+          return {
+            status: "transfer_required",
+            query,
+            source: "local",
+            text: TRANSFER_TEXT,
+            reason:
+              "The request cannot be verified from current menu information.",
+          };
+        }
+      }
+
       if (
         knowledge.status === "known" &&
         knowledge.topic === "vegan"
       ) {
-        const menuMatch =
-          menuMatcher(
-            query,
-            matchOptions,
-          );
-
         if (
           menuMatch.status === "matched" &&
           menuMatch.candidate.item.dietary?.includes("vegan") === true

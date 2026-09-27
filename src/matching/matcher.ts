@@ -379,6 +379,55 @@ function chooseBestPhraseForItem(
   };
 }
 
+function findMissingDoubleLetterCandidates(
+  normalizedQuery: string,
+  index: readonly IndexedMenuItem[],
+): MenuMatchCandidate[] {
+  const queryMatch = normalizedQuery.match(
+    /^(?:(?:(?:uh|um|hey|sorry) )?(?:do you(?: guys)? (?:have|serve|sell)|how much is) (?:a |an |the )?)?([a-z]{7,})(?: please)?$/u,
+  );
+  const token = queryMatch?.[1];
+
+  if (token === undefined) {
+    return [];
+  }
+
+  return index.flatMap((indexedItem) => {
+    const name =
+      normalizeMatchText(indexedItem.item.name);
+
+    if (
+      !/^[a-z]{8,}$/u.test(name) ||
+      name.length !== token.length + 1
+    ) {
+      return [];
+    }
+
+    const missingDoubleLetter =
+      [...name].some(
+        (letter, offset) =>
+          offset > 0 &&
+          letter === name[offset - 1] &&
+          name.slice(0, offset) +
+            name.slice(offset + 1) === token,
+      );
+
+    if (!missingDoubleLetter) {
+      return [];
+    }
+
+    const candidate =
+      chooseBestPhraseForItem(
+        name,
+        indexedItem,
+      );
+
+    return candidate === null
+      ? []
+      : [candidate];
+  });
+}
+
 function keepMostSpecificCandidates(
   candidates: MenuMatchCandidate[],
 ): MenuMatchCandidate[] {
@@ -568,15 +617,34 @@ export function createMenuMatcher(
       );
 
     if (candidates.length === 0) {
-      return {
-        status: "unknown",
-        query,
-        normalizedQuery,
-        sectionContext: null,
-        sectionContextSource: null,
-        reason:
-          "No source-backed menu item phrase matched the query.",
-      };
+      candidates =
+        findMissingDoubleLetterCandidates(
+          normalizedQuery,
+          index,
+        );
+
+      if (candidates.length > 1) {
+        return {
+          status: "ambiguous",
+          query,
+          normalizedQuery,
+          sectionContext: null,
+          sectionContextSource: null,
+          candidates,
+        };
+      }
+
+      if (candidates.length === 0) {
+        return {
+          status: "unknown",
+          query,
+          normalizedQuery,
+          sectionContext: null,
+          sectionContextSource: null,
+          reason:
+            "No source-backed menu item phrase matched the query.",
+        };
+      }
     }
 
     const candidateSections = [
