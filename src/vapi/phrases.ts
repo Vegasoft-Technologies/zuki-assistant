@@ -4,6 +4,8 @@ export const TRANSFER_FAILURE = "I'm sorry, I couldn't connect you to someone ri
 export const PHRASES = {
   yes: ["yes", "yeah", "yep", "sure", "please", "yes please", "ok", "okay", "go ahead"],
   no: ["no", "nope", "no thanks", "no thank you", "not now", "that's fine"],
+  declineStart: ["no thanks", "nope", "nah", "not", "no"],
+  questionWords: ["where", "what", "when", "how", "do you", "is there", "can i"],
   human: ["human", "person", "someone", "staff", "manager", "advisor", "real person", "operator"],
   humanOnly: ["human", "operator", "real person"],
   humanRequest: ["speak to", "talk to", "put me through to", "connect me to"],

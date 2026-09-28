@@ -89,7 +89,13 @@ export async function routeConversation(
   const previous = messages.slice(0, -1).findLast((message) => message.role === "assistant");
   if (previous && normalizeForClassification(content(previous)).includes("can't make reservations")) {
     if (new RegExp(`^(?:${alternatives(PHRASES.yes)})(?:[ ,]+(?:please|thanks))?$`).test(normalized)) return transfer();
-    if (PHRASES.no.some((phrase) => phrase === normalized)) return speak(REPLIES.declined);
+    const asksQuestion = turn.includes("?") ||
+      new RegExp(`\\b(?:${alternatives(PHRASES.questionWords)})\\b`).test(normalized);
+    const startsDecline = PHRASES.declineStart.some((phrase) =>
+      normalized === phrase || normalized.startsWith(`${phrase} `));
+    if (!asksQuestion && (startsDecline || PHRASES.no.some((phrase) => phrase === normalized))) {
+      return speak(REPLIES.declined);
+    }
   }
   if (PHRASES.humanOnly.some((phrase) => phrase === normalized) ||
       new RegExp(`\\b(?:${alternatives(PHRASES.humanRequest)}) (?:a |an |the )?(?:${alternatives(PHRASES.human)})\\b`).test(normalized)) return transfer();

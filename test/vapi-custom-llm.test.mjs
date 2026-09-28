@@ -94,6 +94,22 @@ test("natural closers, greetings, fillers and booking words route without lookup
   assert.deepEqual(await routeConversation([offerWithExtraText, user("no thanks")], tools, noLookup), speak(REPLIES.declined));
 });
 
+test("reservation declines do not transfer, while new questions go to lookup", async () => {
+  const offer = { role: "assistant", content: RESERVATION_OFFER };
+  for (const turn of ["No, that's okay.", "No, I'm good, thanks.", "Nah."]) {
+    assert.deepEqual(await routeConversation([offer, user(turn)], tools, noLookup), speak(REPLIES.declined), turn);
+  }
+  const seen = [];
+  const service = { lookup: async (query) => {
+    seen.push(query);
+    return { status: "answered", text: "We close at 4 PM." };
+  } };
+  for (const turn of ["No, what time do you close on Sunday?", "No, what time do you close on Sunday."]) {
+    assert.deepEqual(await routeConversation([offer, user(turn)], tools, service), speak("We close at 4 PM."));
+  }
+  assert.deepEqual(seen, ["No, what time do you close on Sunday?", "No, what time do you close on Sunday."]);
+});
+
 test("classification normalization never changes the lookup text", async () => {
   const seen = [];
   const service = { lookup: async (query) => {
