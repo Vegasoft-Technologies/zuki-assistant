@@ -19,12 +19,13 @@ export async function provision(
   options: { dryRun?: boolean; fetch?: Fetch; log?: (message: string) => void } = {},
 ) {
   const log = options.log ?? console.log;
-  const tool = createLookupTool(env.ZUKI_API_BASE_URL?.trim() || "https://zuki-api.example.com");
+  const baseUrl = env.ZUKI_API_BASE_URL?.trim() || "https://zuki-api.example.com";
+  const tool = createLookupTool(baseUrl);
   const toolId = resourceId(env.VAPI_LOOKUP_TOOL_ID, "VAPI_LOOKUP_TOOL_ID");
   const assistantId = resourceId(env.VAPI_ASSISTANT_ID, "VAPI_ASSISTANT_ID");
   const number = env.ZUKI_TEST_TRANSFER_NUMBER?.trim() || (options.dryRun ? "+12025550100" : "");
   // Validate all config before creating any remote resource.
-  const preview = createAssistantConfig(toolId ?? "LOOKUP_TOOL_ID_FROM_POST", number);
+  const preview = createAssistantConfig(baseUrl, number);
   if (options.dryRun) {
     const plan = { tool: { method: toolId ? "PATCH" : "POST", body: tool }, assistant: { method: assistantId ? "PATCH" : "POST", body: preview } };
     log(JSON.stringify(plan, null, 2));
@@ -60,7 +61,7 @@ export async function provision(
   }
   const savedToolId = await save("tool", toolId, tool);
   log(`VAPI_LOOKUP_TOOL_ID=${savedToolId}`);
-  const savedAssistantId = await save("assistant", assistantId, createAssistantConfig(savedToolId, number));
+  const savedAssistantId = await save("assistant", assistantId, createAssistantConfig(baseUrl, number));
   log(`VAPI_ASSISTANT_ID=${savedAssistantId}`);
   log("Save both IDs in .env before rerunning. No phone number was created, changed or called.");
   return { toolId: savedToolId, assistantId: savedAssistantId };

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { provision } from "../dist/vapi/provision.js";
-import { createLookupTool, createAssistantConfig, SYSTEM_PROMPT, STATUS_RULES, TRANSFER_MESSAGE } from "../dist/vapi/assistant-config.js";
+import { createLookupTool, createAssistantConfig, SYSTEM_PROMPT, TRANSFER_MESSAGE } from "../dist/vapi/assistant-config.js";
 import { createApiServer } from "../dist/api/server.js";
 
 const toolId = "11111111-1111-4111-8111-111111111111";
@@ -13,7 +13,7 @@ const env = {
 };
 const quiet = () => {};
 
-test("provision creates the REST lookup tool first, then attaches its returned ID", async () => {
+test("provision preserves the lookup tool and configures the custom LLM", async () => {
   const calls = [];
   const logs = [];
   const result = await provision(env, {
@@ -38,7 +38,8 @@ test("provision creates the REST lookup tool first, then attaches its returned I
   assert.deepEqual(Object.keys(calls[0].body.body.properties), ["query"]);
   assert.equal(calls[0].body.body.additionalProperties, false);
   assert.equal(calls[0].body.variableExtractionPlan, undefined);
-  assert.deepEqual(calls[1].body.model.toolIds, [toolId]);
+  assert.equal(calls[1].body.model.toolIds, undefined);
+  assert.equal(calls[1].body.model.url, "https://backend.example.com/api/vapi");
   assert.equal(calls[1].body.model.tools[0].destinations[0].number, env.ZUKI_TEST_TRANSFER_NUMBER);
   assert.equal(calls[1].body.model.tools[0].destinations[0].message, TRANSFER_MESSAGE);
   assert.ok(!logs.join("\n").includes(env.VAPI_API_KEY));
@@ -57,6 +58,7 @@ test("rerun with saved IDs PATCHes existing resources and updates the backend UR
     [`https://api.vapi.ai/tool/${toolId}`, "PATCH"], [`https://api.vapi.ai/assistant/${assistantId}`, "PATCH"],
   ]);
   assert.equal(calls[0].body.url, "https://deployed.example.com/base/api/lookup");
+  assert.equal(calls[1].body.model.url, "https://deployed.example.com/base/api/vapi");
 });
 
 test("dry run needs no credentials or number and makes no network calls", async () => {
@@ -108,37 +110,27 @@ test("uncertain network outcomes and malformed success responses require dashboa
   }
 });
 
-test("deployed prompt keeps clarification separate from mandatory transfers", () => {
-  assert.deepEqual(Object.keys(STATUS_RULES).sort(), ["answered", "clarification_required", "transfer_required", "unavailable"].sort());
-  assert.match(STATUS_RULES.clarification_required, /Do NOT transfer/);
-  assert.match(STATUS_RULES.clarification_required, /NEW lookup_zuki_info/);
-  for (const status of ["transfer_required", "unavailable"]) {
-    assert.match(STATUS_RULES[status], /Do not read response aloud\. Invoke transferCall immediately/);
-  }
-  for (const status of ["answered", "clarification_required"]) {
-    assert.match(STATUS_RULES[status], /Read response verbatim/);
-  }
-  assert.doesNotMatch(SYSTEM_PROMPT, /\btext\b/);
-  assert.match(SYSTEM_PROMPT, /status error/);
-  const config = createAssistantConfig(toolId, env.ZUKI_TEST_TRANSFER_NUMBER);
+test("custom LLM config preserves transfer, transcription and voice settings", () => {
+  const config = createAssistantConfig(env.ZUKI_API_BASE_URL, env.ZUKI_TEST_TRANSFER_NUMBER);
+  assert.equal(config.model.provider, "custom-llm");
+  assert.equal(config.model.url, "https://backend.example.com/api/vapi");
+  assert.equal(config.model.model, "zuki-router");
+  assert.equal(config.model.temperature, 0);
+  assert.equal(config.model.metadataSendMode, "off");
+  assert.equal("toolIds" in config.model, false);
   assert.equal(config.model.messages[0].content, SYSTEM_PROMPT);
-  assert.match(SYSTEM_PROMPT, /For EVERY factual question/);
-  assert.match(SYSTEM_PROMPT, /Reservations are not supported/);
-  assert.match(SYSTEM_PROMPT, /Only when the caller explicitly asks to book/);
-  assert.match(SYSTEM_PROMPT, /Never paraphrase/);
-  // 2026-09-28 web test: a repeated question reused the old answer, and a garbled prefix was dropped from query.
-  assert.match(SYSTEM_PROMPT, /even when the caller repeats an earlier question/);
-  assert.match(SYSTEM_PROMPT, /Never drop, shorten or split any part of it/);
+  assert.match(SYSTEM_PROMPT, /server-side/);
+  assert.equal(config.model.tools[0].type, "transferCall");
+  assert.equal(config.model.tools[0].destinations[0].message, TRANSFER_MESSAGE);
   assert.equal(config.transcriber.language, "en");
   assert.equal(config.transcriber.model, "gpt-4o-transcribe");
   assert.equal(config.transcriber.fallbackPlan.transcribers[0].model, "nova-3");
-  assert.match(SYSTEM_PROMPT, /exactly once per caller turn/);
-  assert.match(STATUS_RULES.answered, /Do not add a follow-up/);
-  // 2026-09-28 third web test: gpt-4.1 still split the combined question and dropped "£" itself.
-  assert.match(SYSTEM_PROMPT, /any of them is transfer_required or unavailable, read none of the responses/);
-  // Fourth test: "£" still vanished before TTS, so the model writes prices in words.
-  assert.match(SYSTEM_PROMPT, /"£3.55" becomes "3 pounds 55"/);
-  assert.match(SYSTEM_PROMPT, /Never write the "£" symbol/);
+  assert.equal(config.voice.voiceId, "Elliot");
+  assert.equal(config.firstMessage, "Hello, you've reached Zuki's assistant. How can I help you?");
+  assert.deepEqual(config.voice.chunkPlan.formatPlan.replacements.slice(0, 2), [
+    { type: "exact", key: "Zuki's", value: "Zookee's" },
+    { type: "exact", key: "Zuki", value: "Zookee" },
+  ]);
   const say = (text) => config.voice.chunkPlan.formatPlan.replacements
     .filter((r) => r.type === "regex")
     .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
@@ -148,7 +140,7 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
 });
 
-test("prompt reads the fields the deployed /api/lookup server actually returns", async () => {
+test("legacy /api/lookup contract remains unchanged", async () => {
   const results = {
     "sunday": { status: "answered", text: "On sunday, Zuki's closes at 4 PM." },
     "sushi": { status: "transfer_required", text: "I'm not sure about that. Let me transfer you to someone who can help." },

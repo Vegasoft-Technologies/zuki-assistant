@@ -4,6 +4,50 @@ Bu klasör assistant, sistem promptu, STT/TTS ve lookup tool'unu Vapi REST API i
 kurar. Telefon numarası oluşturmaz/değiştirmez ve arama başlatmaz. Gerçek kafe
 numarası ve rezervasyon akışı kapsam dışıdır.
 
+## Custom LLM mode (2026-09-28)
+
+Vapi's intermediate LLM split combined questions and dropped the pound sign before
+TTS. The assistant now uses `custom-llm` with base URL
+`{ZUKI_API_BASE_URL}/api/vapi`; Vapi POSTs to `/chat/completions`.
+The server routes the last caller turn deterministically and sends factual turns
+verbatim to the same in-process knowledge-safe service, exactly once. Responses
+use OpenAI SSE chunks (or JSON for `stream: false`); prices become spoken currency
+(e.g. £3.55 → 3 pounds 55). No intermediate LLM rewrites the answer.
+
+Rules run in this order; phrase lists and fixed replies live in `phrases.ts`:
+
+| Input | Action |
+| --- | --- |
+| Last message is not user | Empty assistant turn, stop |
+| Yes/no after the exact reservation offer | Transfer / “No problem.” |
+| Explicit human request | Transfer |
+| Book / reserve / reservation / hold a table | Reservation offer; await acceptance |
+| Greeting only, optionally “how are you” | “Hello! How can I help you?” |
+| Thanks/goodbye only | “You're welcome. Goodbye!” |
+| Empty/filler only | Ask the caller to repeat |
+| Everything else | One lookup with the original whole turn |
+| Lookup answered / clarification_required | Speak returned text with spoken prices; no appended question |
+| Lookup transfer_required / unavailable / error / empty text | Transfer |
+
+Transfer turns emit only a `transferCall` function call. Its destination comes from
+the request tool's single-value destination enum, then `ZUKI_TEST_TRANSFER_NUMBER`.
+Without a valid destination, speak the fixed connection-failure sentence. The first
+transfer tool schema is logged as names/keys only, without enum values or numbers.
+The attached transfer tool and its destination message are unchanged. The assistant
+has no `toolIds`; provisioning still maintains the legacy lookup tool for compatibility.
+Transcription remains gpt-4o-transcribe with nova-3 fallback; voice remains Elliot,
+including Zuki respelling and the pound-symbol replacement safety net.
+
+**Deploy order: merge → Railway redeploy (new route) → `npm run vapi:provision` →
+web test → phone test. The backend must be redeployed before provisioning.**
+
+Known limits: clarification replies still reach lookup without conversation context.
+The live `transferCall` argument shape and post-transfer request need confirmation
+on a live call. Local tests do not establish successful telephone transfer.
+
+The legacy tool contract below remains available through `/api/lookup`, but the
+custom LLM calls the service directly. It does not attach or invoke that HTTP tool.
+
 ## Sude için kurulum checklist'i
 
 - [ ] [Vapi Dashboard](https://dashboard.vapi.ai) üzerinden hesap aç; doğru test
@@ -28,12 +72,12 @@ numarası ve rezervasyon akışı kapsam dışıdır.
 - [ ] `npm run vapi:provision` çalıştır. Önce `POST /tool`, ardından dönen tool ID'siyle
   `POST /assistant` yapılır. Çıkan `VAPI_LOOKUP_TOOL_ID` ve `VAPI_ASSISTANT_ID`
   satırlarını **hemen `.env` dosyasına kaydet**.
-- [ ] Dashboard'da `Zuki - Sude test` assistant'ını aç. Model: OpenAI `gpt-4.1`,
-  temperature `0`; STT: Deepgram `nova-2`, `en`; TTS: Vapi native `Elliot`
+- [ ] Dashboard'da `Zuki - Sude test` assistant'ını aç. Model: `custom-llm` (`zuki-router`),
+  temperature `0`; STT: OpenAI `gpt-4o-transcribe`, `en` (nova-3 fallback); TTS: Vapi native `Elliot`
   (OpenAI `gpt-4o-mini-tts` web testinde turda 2,5–5,6 sn ses gecikmesi verdi). Bunları kod kurar; dashboard'da mevcut ve kullanılabilir olduklarını
   kontrol et, sesi dinle. Gereken provider erişimini/krediyi Integrations'da ayarla.
   Bu ayarlar Vapi ses katmanına aittir; backend'in Claude ayarını değiştirmez.
-- [ ] Tools altında `lookup_zuki_info` ve assistant içinde yerleşik `transferCall`
+- [ ] Assistant içinde yalnız yerleşik `transferCall`
   bulunduğunu kontrol et. Dashboard taslak/publish durumu gösteriyorsa tool ve
   assistant'ın bu sürümünü Publish/Quick Publish ile etkinleştir.
 - [ ] Yalnız **yeni test numarasında** Inbound Settings → Assistant →
@@ -61,7 +105,7 @@ Vapi API Logs'dadır (anahtarların sızmaması için cevap gövdesi loglanmaz).
 limit kontrolü yap. Kaynakları silmek istersen yalnız bu test kaynaklarını
 dashboard'dan seç; numara ilişkisini de kontrol et.
 
-## Endpoint ve geçici response sözleşmesi
+## Legacy lookup tool sözleşmesi (custom LLM tarafından kullanılmaz)
 
 Deploy geldiğinde `.env` içindeki **tek URL satırını** değiştir:
 
@@ -144,7 +188,7 @@ npm run build
 ```
 
 Yerel testler provision HTTP sırası/payload'ı, tekrar kurulum, hata kurtarma ve
-prompt kurallarını kontrol eder. Gerçek Vapi hesabı, LLM davranışı, ses sıralaması
+deterministik router kurallarını kontrol eder. Gerçek Vapi hesabı, LLM davranışı, ses sıralaması
 ve telefon bağlantısının kanıtı değildir. Bunlar ayrıca test edilmelidir:
 
 - [ ] Sunday closing, Turkish breakfast, vegan, dog, sushi sorularını sor; her
@@ -160,8 +204,7 @@ ve telefon bağlantısının kanıtı değildir. Bunlar ayrıca test edilmelidir
 - [ ] Rezervasyonda reddetme + transfer önerisi, kabul edilmeden transfer olmaması;
   başarısız transferde bağlantı kurulduğu iddiası olmaması kontrol edilir.
 
-Status yönlendirmesi bu aşamada sistem promptuyla yapılır; deterministik bir
-telefon state machine'i değildir. Tamamı canlı ses/log testleriyle doğrulanmadan
+Status yönlendirmesi custom LLM router'ında deterministiktir. Tamamı canlı ses/log testleriyle doğrulanmadan
 üretim kabulü verilmez. Provision başarılı olsa da placeholder URL ile bilgi
 cevapları çalışmaz. Test numarası ve gerçek çağrı testi Sude'nin manuel adımıdır.
 
