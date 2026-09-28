@@ -93,7 +93,14 @@ export function createAssistantConfig(lookupToolId: string, transferNumber: stri
         }],
       }],
     },
-    transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
+    // 2026-09-28 web tests: nova-2 heard "How much is a cappuccino?" as "March is a cappuccino",
+    // "Is a cup of tea" and "Cucina cappuccino". nova-3 keyterm prompting boosts these phrases.
+    transcriber: {
+      provider: "deepgram",
+      model: "nova-3",
+      language: "en",
+      keyterm: ["Zuki's", "cappuccino", "Turkish breakfast", "vegan breakfast", "sushi", "How much is"],
+    },
     // Vapi native voice: the 2026-09-26 web test measured OpenAI gpt-4o-mini-tts at 2.5-5.6 s voice latency per turn.
     // Elliot read "Zuki's" as "Zuppies"; respell it before TTS. Transcripts keep the real spelling.
     voice: {

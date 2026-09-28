@@ -130,6 +130,8 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.match(SYSTEM_PROMPT, /even when the caller repeats an earlier question/);
   assert.match(SYSTEM_PROMPT, /Never drop, shorten or split any part of it/);
   assert.equal(config.transcriber.language, "en");
+  assert.equal(config.transcriber.model, "nova-3");
+  assert.ok(config.transcriber.keyterm.includes("cappuccino"));
   assert.match(SYSTEM_PROMPT, /exactly once per caller turn/);
   assert.match(STATUS_RULES.answered, /Do not add a follow-up/);
   // 2026-09-28 third web test: gpt-4.1 still split the combined question and dropped "£" itself.
