@@ -132,6 +132,9 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.equal(config.transcriber.language, "en");
   assert.match(SYSTEM_PROMPT, /exactly once per caller turn/);
   assert.match(STATUS_RULES.answered, /Do not add a follow-up/);
+  // 2026-09-28 third web test: gpt-4.1 still split the combined question and dropped "£" itself.
+  assert.match(SYSTEM_PROMPT, /any of them is transfer_required or unavailable, read none of the responses/);
+  assert.match(SYSTEM_PROMPT, /keeping every symbol such as "£"/);
   const say = (text) => config.voice.chunkPlan.formatPlan.replacements
     .filter((r) => r.type === "regex")
     .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
