@@ -7,10 +7,11 @@ export const PHRASES = {
   human: ["human", "person", "someone", "staff", "manager", "advisor", "real person", "operator"],
   humanOnly: ["human", "operator", "real person"],
   humanRequest: ["speak to", "talk to", "put me through to", "connect me to"],
-  reservation: ["book", "reserve", "reservation", "hold a table"],
+  reservation: ["book", "booking", "reserve", "reservation", "reservations", "hold a table"],
   greeting: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
-  goodbye: ["thanks", "thank you", "cheers", "bye", "goodbye", "that's all"],
-  filler: ["", "um", "uh", "hmm", "sorry", "sorry what", "pardon", "what", "huh"],
+  goodbye: ["thanks", "thank you", "thank you so much", "cheers", "bye", "goodbye"],
+  acknowledgement: ["ok", "okay", "alright", "great", "perfect", "lovely", "cool", "got it", "no", "that's it", "that's all", "nothing else"],
+  filler: ["", "um", "uh", "hmm", "sorry", "sorry what", "pardon", "what", "huh", "come again", "can you repeat that", "say that again", "i didn't catch that", "what did you say"],
 } as const;
 
 export const REPLIES = {

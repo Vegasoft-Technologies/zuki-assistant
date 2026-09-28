@@ -36,9 +36,9 @@ export function transferAction(tools: unknown, fallback?: string): Action {
 }
 
 export function toSpokenPrices(text: string): string {
-  return text.replace(/£(\d+)(?:\.(\d{2}))?/g, (_amount, whole: string, fraction?: string) => {
+  return text.replace(/£(\d+)(?:\.(\d{1,2}))?/g, (_amount, whole: string, fraction?: string) => {
     const pounds = Number(whole);
-    const pence = Number(fraction ?? 0);
+    const pence = Number(fraction?.padEnd(2, "0") ?? 0);
     if (pounds === 0 && pence > 0) return `${pence} ${pence === 1 ? "penny" : "pence"}`;
     return `${pounds} ${pounds === 1 ? "pound" : "pounds"}${pence ? ` ${pence}` : ""}`;
   });
@@ -50,25 +50,53 @@ function content(message: Message): string {
 }
 const alternatives = (phrases: readonly string[]) => phrases.join("|");
 
+// Classification may discard punctuation; lookup always receives the untouched turn.
+function normalizeForClassification(text: string): string {
+  return text.toLowerCase().replace(/[’‘]/g, "'")
+    .replace(/[^\p{L}\p{N} ']/gu, " ").replace(/\s+/g, " ").trim();
+}
+
+function closingAction(normalized: string): Action | undefined {
+  if (!normalized) return undefined;
+  const phrases = [
+    ...PHRASES.goodbye.map((phrase) => ({ phrase, goodbye: true })),
+    ...PHRASES.acknowledgement.map((phrase) => ({ phrase, goodbye: false })),
+  ].sort((a, b) => b.phrase.length - a.phrase.length);
+  let remaining = normalized;
+  let hasGoodbye = false;
+  let matched = false;
+  while (remaining) {
+    const entry = phrases.find(({ phrase }) => remaining === phrase || remaining.startsWith(`${phrase} `));
+    if (!entry) return undefined;
+    matched = true;
+    hasGoodbye ||= entry.goodbye;
+    remaining = remaining.slice(entry.phrase.length).trimStart();
+    if (remaining.startsWith("and ")) remaining = remaining.slice(4);
+  }
+  if (!matched) return undefined;
+  return hasGoodbye ? { kind: "speak", text: REPLIES.goodbye } : { kind: "silent" };
+}
+
 export async function routeConversation(
   messages: readonly Message[], tools: unknown, service: KnowledgeSafeAssistantService, fallback?: string,
 ): Promise<Action> {
   const last = messages.at(-1);
   if (!last || last.role !== "user") return { kind: "silent" };
   const turn = content(last);
-  const normalized = turn.toLowerCase().trim().replace(/[.!?,;:]+$/g, "").trim();
+  const normalized = normalizeForClassification(turn);
   const speak = (text: string): Action => ({ kind: "speak", text });
   const transfer = () => transferAction(tools, fallback);
   const previous = messages.slice(0, -1).findLast((message) => message.role === "assistant");
-  if (previous && content(previous) === RESERVATION_OFFER) {
+  if (previous && normalizeForClassification(content(previous)).includes("can't make reservations")) {
     if (new RegExp(`^(?:${alternatives(PHRASES.yes)})(?:[ ,]+(?:please|thanks))?$`).test(normalized)) return transfer();
     if (PHRASES.no.some((phrase) => phrase === normalized)) return speak(REPLIES.declined);
   }
   if (PHRASES.humanOnly.some((phrase) => phrase === normalized) ||
       new RegExp(`\\b(?:${alternatives(PHRASES.humanRequest)}) (?:a |an |the )?(?:${alternatives(PHRASES.human)})\\b`).test(normalized)) return transfer();
   if (new RegExp(`\\b(?:${alternatives(PHRASES.reservation)})\\b`).test(normalized)) return speak(RESERVATION_OFFER);
-  if (new RegExp(`^(?:${alternatives(PHRASES.greeting)})(?:[ ,]+how are you)?$`).test(normalized)) return speak(REPLIES.greeting);
-  if (new RegExp(`^(?:${alternatives(PHRASES.goodbye)})(?:(?:[ ,]+|[ ,]+and[ ,]+)(?:${alternatives(PHRASES.goodbye)}))*$`).test(normalized)) return speak(REPLIES.goodbye);
+  if (new RegExp(`^(?:${alternatives(PHRASES.greeting)})(?: (?:${alternatives(PHRASES.greeting)}))?(?: (?:there|zuki))?(?: how are you)?$`).test(normalized)) return speak(REPLIES.greeting);
+  const closer = closingAction(normalized);
+  if (closer) return closer;
   if (PHRASES.filler.some((phrase) => phrase === normalized)) return speak(REPLIES.filler);
   try {
     const result = await service.lookup(turn);

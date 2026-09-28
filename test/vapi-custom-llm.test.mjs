@@ -35,7 +35,7 @@ function assertTransfer(parts, number = destination) {
 
 test("spoken prices preserve all required amounts and other text", () => {
   for (const [input, output] of [
-    ["£3.55", "3 pounds 55"], ["£3.50", "3 pounds 50"], ["£29.95", "29 pounds 95"],
+    ["£3.55", "3 pounds 55"], ["£3.5", "3 pounds 50"], ["£3.50", "3 pounds 50"], ["£29.95", "29 pounds 95"],
     ["£5", "5 pounds"], ["£5.00", "5 pounds"], ["£1", "1 pound"], ["£1.20", "1 pound 20"], ["£0.80", "80 pence"],
     ["Which size?", "Which size?"], ["£1 and £3.55.", "1 pound and 3 pounds 55."],
   ]) assert.equal(toSpokenPrices(input), output);
@@ -59,6 +59,51 @@ test("routing handles fixed phrases and reservation follow-ups without lookup", 
     for (const request of PHRASES.humanRequest) assert.deepEqual(await routeConversation([user(`Can I ${request} a ${person}?`)], tools, noLookup), transfer);
   }
   for (const person of PHRASES.humanOnly) assert.deepEqual(await routeConversation([user(person)], tools, noLookup), transfer);
+});
+
+test("natural closers, greetings, fillers and booking words route without lookup", async () => {
+  const cases = [
+    ["Okay, thank you.", speak(REPLIES.goodbye)],
+    ["Great, thanks!", speak(REPLIES.goodbye)],
+    ["Perfect.", { kind: "silent" }],
+    ["Okay.", { kind: "silent" }],
+    ["No, that’s all, thanks.", speak(REPLIES.goodbye)],
+    ["Hello there.", speak(REPLIES.greeting)],
+    ["Hi there!", speak(REPLIES.greeting)],
+    ["Sorry, what?", speak(REPLIES.filler)],
+    ["I'd like to make a booking.", speak(RESERVATION_OFFER)],
+    ["Do you take reservations?", speak(RESERVATION_OFFER)],
+    ["Hi Zuki, how are you?", speak(REPLIES.greeting)],
+    ["Hi, good morning!", speak(REPLIES.greeting)],
+    ["Thank you so much.", speak(REPLIES.goodbye)],
+    ["That's it.", { kind: "silent" }],
+    ["Nothing else.", { kind: "silent" }],
+    ["Alright, got it, cheers.", speak(REPLIES.goodbye)],
+    ["Lovely. Cool.", { kind: "silent" }],
+    ["Come again?", speak(REPLIES.filler)],
+    ["Can you repeat that?", speak(REPLIES.filler)],
+    ["Say that again.", speak(REPLIES.filler)],
+    ["I didn’t catch that.", speak(REPLIES.filler)],
+    ["What did you say?", speak(REPLIES.filler)],
+  ];
+  for (const [turn, expected] of cases) {
+    assert.deepEqual(await routeConversation([user(turn)], tools, noLookup), expected, turn);
+  }
+  const offerWithExtraText = { role: "assistant", content: `Sorry, I can't make reservations. ${RESERVATION_OFFER}` };
+  assert.deepEqual(await routeConversation([offerWithExtraText, user("yes please")], tools, noLookup), transfer);
+  assert.deepEqual(await routeConversation([offerWithExtraText, user("no thanks")], tools, noLookup), speak(REPLIES.declined));
+});
+
+test("classification normalization never changes the lookup text", async () => {
+  const seen = [];
+  const service = { lookup: async (query) => {
+    seen.push(query);
+    return { status: "answered", text: "Source-backed answer." };
+  } };
+  for (const turn of ["  Hi, do you have sushi?!  ", "Okay, do you serve lunch?", "No, what's on the menu?", "What’s the best to share?"]) {
+    assert.deepEqual(await routeConversation([user(turn)], tools, service), speak("Source-backed answer."));
+  }
+  assert.deepEqual(seen, ["  Hi, do you have sushi?!  ", "Okay, do you serve lunch?", "No, what's on the menu?", "What’s the best to share?"]);
 });
 
 test("lookup receives whole original turns exactly once, including text parts and repeated questions", async () => {
