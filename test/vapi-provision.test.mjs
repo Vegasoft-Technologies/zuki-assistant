@@ -126,6 +126,9 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.match(SYSTEM_PROMPT, /Reservations are not supported/);
   assert.match(SYSTEM_PROMPT, /Only when the caller explicitly asks to book/);
   assert.match(SYSTEM_PROMPT, /Never paraphrase/);
+  // 2026-09-28 web test: a repeated question reused the old answer, and a garbled prefix was dropped from query.
+  assert.match(SYSTEM_PROMPT, /even when the caller repeats an earlier question/);
+  assert.match(SYSTEM_PROMPT, /Never drop, shorten or split any part of it/);
   assert.equal(config.transcriber.language, "en");
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
 });
