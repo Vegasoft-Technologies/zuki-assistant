@@ -57,7 +57,7 @@ export function createAssistantConfig(baseUrl: string, transferNumber: string) {
       provider: "custom-llm",
       url,
       model: "zuki-router",
-      metadataSendMode: "off",
+      // Vapi rejects metadataSendMode when starting a call (2026-09-28 web test), so keep the default.
       temperature: 0,
       messages: [{ role: "system", content: SYSTEM_PROMPT }],
       tools: [{

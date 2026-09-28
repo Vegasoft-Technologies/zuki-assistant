@@ -116,7 +116,7 @@ test("custom LLM config preserves transfer, transcription and voice settings", (
   assert.equal(config.model.url, "https://backend.example.com/api/vapi");
   assert.equal(config.model.model, "zuki-router");
   assert.equal(config.model.temperature, 0);
-  assert.equal(config.model.metadataSendMode, "off");
+  assert.equal("metadataSendMode" in config.model, false);
   assert.equal("toolIds" in config.model, false);
   assert.equal(config.model.messages[0].content, SYSTEM_PROMPT);
   assert.match(SYSTEM_PROMPT, /server-side/);
