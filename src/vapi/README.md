@@ -28,7 +28,7 @@ numarası ve rezervasyon akışı kapsam dışıdır.
 - [ ] `npm run vapi:provision` çalıştır. Önce `POST /tool`, ardından dönen tool ID'siyle
   `POST /assistant` yapılır. Çıkan `VAPI_LOOKUP_TOOL_ID` ve `VAPI_ASSISTANT_ID`
   satırlarını **hemen `.env` dosyasına kaydet**.
-- [ ] Dashboard'da `Zuki - Sude test` assistant'ını aç. Model: OpenAI `gpt-4o-mini`,
+- [ ] Dashboard'da `Zuki - Sude test` assistant'ını aç. Model: OpenAI `gpt-4.1`,
   temperature `0`; STT: Deepgram `nova-2`, `en`; TTS: Vapi native `Elliot`
   (OpenAI `gpt-4o-mini-tts` web testinde turda 2,5–5,6 sn ses gecikmesi verdi). Bunları kod kurar; dashboard'da mevcut ve kullanılabilir olduklarını
   kontrol et, sesi dinle. Gereken provider erişimini/krediyi Integrations'da ayarla.

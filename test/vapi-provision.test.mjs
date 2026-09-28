@@ -126,7 +126,25 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.match(SYSTEM_PROMPT, /Reservations are not supported/);
   assert.match(SYSTEM_PROMPT, /Only when the caller explicitly asks to book/);
   assert.match(SYSTEM_PROMPT, /Never paraphrase/);
+  // 2026-09-28 web test: a repeated question reused the old answer, and a garbled prefix was dropped from query.
+  assert.match(SYSTEM_PROMPT, /even when the caller repeats an earlier question/);
+  assert.match(SYSTEM_PROMPT, /Never drop, shorten or split any part of it/);
   assert.equal(config.transcriber.language, "en");
+  assert.equal(config.transcriber.model, "gpt-4o-transcribe");
+  assert.equal(config.transcriber.fallbackPlan.transcribers[0].model, "nova-3");
+  assert.match(SYSTEM_PROMPT, /exactly once per caller turn/);
+  assert.match(STATUS_RULES.answered, /Do not add a follow-up/);
+  // 2026-09-28 third web test: gpt-4.1 still split the combined question and dropped "£" itself.
+  assert.match(SYSTEM_PROMPT, /any of them is transfer_required or unavailable, read none of the responses/);
+  // Fourth test: "£" still vanished before TTS, so the model writes prices in words.
+  assert.match(SYSTEM_PROMPT, /"£3.55" becomes "3 pounds 55"/);
+  assert.match(SYSTEM_PROMPT, /Never write the "£" symbol/);
+  const say = (text) => config.voice.chunkPlan.formatPlan.replacements
+    .filter((r) => r.type === "regex")
+    .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
+  assert.equal(say("A cappuccino is £3.55."), "A cappuccino is 3 pounds 55.");
+  assert.equal(say("£29.95 for 2 people, or £52.95 for 4 people"), "29 pounds 95 for 2 people, or 52 pounds 95 for 4 people");
+  assert.equal(say("Entry is £5."), "Entry is 5 pounds.");
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
 });
 
