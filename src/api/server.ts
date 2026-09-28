@@ -4,6 +4,26 @@ import cors from "cors";
 import { z } from "zod";
 import type { KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
 
+import { buildCompletion, buildSse, routeConversation, transferAction, transferToolShape } from "../vapi/custom-llm.js";
+
+const completionRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.string(),
+    content: z.union([z.string(), z.array(z.object({ type: z.string(), text: z.string().optional() })), z.null()]).optional(),
+  })),
+  tools: z.array(z.unknown()).optional(),
+  stream: z.boolean().optional(),
+});
+
+function sendCompletion(res: Response, action: Parameters<typeof buildCompletion>[0], stream = true) {
+  if (stream) {
+    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+    res.end(buildSse(action));
+  } else {
+    res.json(buildCompletion(action));
+  }
+}
+
 const lookupRequestSchema = z.object({
   query: z
     .string()
@@ -84,11 +104,35 @@ export function createApiServer(
 ) {
   const app = express();
 
+  let loggedTransferShape = false;
+
   app.use(cors());
   app.use(express.json({ limit: "100kb" }));
 
   app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  app.post("/api/vapi/chat/completions", async (req: Request, res: Response): Promise<void> => {
+    const parsed = completionRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid request format", details: z.treeifyError(parsed.error) });
+      return;
+    }
+    const { messages, tools, stream } = parsed.data;
+    try {
+      if (!loggedTransferShape) {
+        const shape = transferToolShape(tools);
+        if (shape) {
+          loggedTransferShape = true;
+          console.info("Vapi transferCall schema:", shape);
+        }
+      }
+      const action = await routeConversation(messages, tools, assistantService, process.env.ZUKI_TEST_TRANSFER_NUMBER);
+      sendCompletion(res, action, stream);
+    } catch {
+      sendCompletion(res, transferAction(tools, process.env.ZUKI_TEST_TRANSFER_NUMBER), stream);
+    }
   });
 
   app.post(
