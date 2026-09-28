@@ -130,6 +130,14 @@ test("deployed prompt keeps clarification separate from mandatory transfers", ()
   assert.match(SYSTEM_PROMPT, /even when the caller repeats an earlier question/);
   assert.match(SYSTEM_PROMPT, /Never drop, shorten or split any part of it/);
   assert.equal(config.transcriber.language, "en");
+  assert.match(SYSTEM_PROMPT, /exactly once per caller turn/);
+  assert.match(STATUS_RULES.answered, /Do not add a follow-up/);
+  const say = (text) => config.voice.chunkPlan.formatPlan.replacements
+    .filter((r) => r.type === "regex")
+    .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
+  assert.equal(say("A cappuccino is £3.55."), "A cappuccino is 3 pounds 55.");
+  assert.equal(say("£29.95 for 2 people, or £52.95 for 4 people"), "29 pounds 95 for 2 people, or 52 pounds 95 for 4 people");
+  assert.equal(say("Entry is £5."), "Entry is 5 pounds.");
   assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
 });
 
