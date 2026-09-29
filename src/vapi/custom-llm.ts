@@ -77,8 +77,60 @@ function closingAction(normalized: string): Action | undefined {
   return hasGoodbye ? { kind: "speak", text: REPLIES.goodbye } : { kind: "silent" };
 }
 
+export type Offer = "reservation" | "clarify";
+// null = we answered without an offer; undefined = no record (e.g. first message, server restart).
+export interface CallOffers {
+  at(userTurn: number): Offer | null | undefined;
+  record(userTurn: number, offer: Offer | null): void;
+}
+
+// Vapi replaces spoken assistant turns with a speech transcript of them ("Zuki's" → "Zucchini"),
+// so offers are remembered per call and keyed by the user turn they answered, not matched by text.
+export function createOfferMemory(ttlMs = 2 * 60 * 60 * 1000, now = () => Date.now()) {
+  const calls = new Map<string, { seenAt: number; offers: Map<number, Offer | null> }>();
+  return {
+    forCall(callId: string): CallOffers {
+      return {
+        at: (userTurn) => calls.get(callId)?.offers.get(userTurn),
+        record: (userTurn, offer) => {
+          const time = now();
+          for (const [id, call] of calls) if (time - call.seenAt > ttlMs) calls.delete(id);
+          const call = calls.get(callId) ?? { seenAt: time, offers: new Map() };
+          call.seenAt = time;
+          // A later request for the same user turn replaces a discarded speculative answer.
+          call.offers.set(userTurn, offer);
+          calls.set(callId, call);
+        },
+      };
+    },
+  };
+}
+
+// Fallback when no record exists: keywords that usually survive the speech transcript.
+function offerFromText(text: string): Offer | null {
+  const normalized = normalizeForClassification(text);
+  if (/\breservations?\b/.test(normalized)) return "reservation";
+  if (/\bnot sure\b|\bfrom our team\b|\btransfer you\b/.test(normalized)) return "clarify";
+  return null;
+}
+
+const offerOf = (action: Action): Offer | null =>
+  action.kind === "speak" && action.text === RESERVATION_OFFER ? "reservation"
+    : action.kind === "speak" && action.text === CLARIFY_OFFER ? "clarify" : null;
+
 export async function routeConversation(
   messages: readonly Message[], tools: unknown, service: KnowledgeSafeAssistantService, fallback?: string,
+  offers?: CallOffers,
+): Promise<Action> {
+  const userTurn = messages.filter((message) => message.role === "user").length;
+  const action = await decide(messages, tools, service, fallback, offers);
+  if (messages.at(-1)?.role === "user") offers?.record(userTurn, offerOf(action));
+  return action;
+}
+
+async function decide(
+  messages: readonly Message[], tools: unknown, service: KnowledgeSafeAssistantService, fallback?: string,
+  offers?: CallOffers,
 ): Promise<Action> {
   const last = messages.at(-1);
   if (!last || last.role !== "user") return { kind: "silent" };
@@ -86,11 +138,15 @@ export async function routeConversation(
   const normalized = normalizeForClassification(turn);
   const speak = (text: string): Action => ({ kind: "speak", text });
   const transfer = () => transferAction(tools, fallback);
-  const assistantTurns = messages.slice(0, -1).filter((message) => message.role === "assistant")
-    .map((message) => normalizeForClassification(content(message)));
-  const clarifyOffer = normalizeForClassification(CLARIFY_OFFER);
-  const previous = assistantTurns.at(-1);
-  if (previous !== undefined && (previous.includes("can't make reservations") || previous.includes(clarifyOffer))) {
+  const pastOffers: (Offer | null)[] = [];
+  let usersBefore = 0;
+  for (const message of messages.slice(0, -1)) {
+    if (message.role === "user") usersBefore++;
+    if (message.role !== "assistant") continue;
+    const recorded = offers?.at(usersBefore);
+    pastOffers.push(recorded === undefined ? offerFromText(content(message)) : recorded);
+  }
+  if (pastOffers.at(-1)) {
     if (new RegExp(`^(?:${alternatives(PHRASES.yes)})(?:[ ,]+(?:please|thanks))?$`).test(normalized)) return transfer();
     const asksQuestion = turn.includes("?") ||
       new RegExp(`\\b(?:${alternatives(PHRASES.questionWords)})\\b`).test(normalized);
@@ -115,7 +171,7 @@ export async function routeConversation(
   // Unknown or misheard requests get one transfer offer per call; deliberate transfers stay direct.
   const generic = result.status === "unavailable" ||
     (result.status === "transfer_required" && GENERIC_FALLBACK_REASONS.has(result.reason));
-  if (generic && !assistantTurns.some((text) => text.includes(clarifyOffer))) return speak(CLARIFY_OFFER);
+  if (generic && !pastOffers.includes("clarify")) return speak(CLARIFY_OFFER);
   return transfer();
 }
 

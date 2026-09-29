@@ -14,6 +14,11 @@ verbatim to the same in-process knowledge-safe service, exactly once. Responses
 use OpenAI SSE chunks (or JSON for `stream: false`); prices become spoken currency
 (e.g. £3.55 → 3 pounds 55). No intermediate LLM rewrites the answer.
 
+Vapi sends back a speech transcript of what the bot said (e.g. “Zuki's” → “Zucchini”), not the
+text we returned. Offers are therefore remembered in memory per `call.id`, keyed by the user turn
+they answered; without a call id or a record (restart), offer keywords in the transcript are the
+fallback. Records expire after two hours.
+
 Rules run in this order; phrase lists and fixed replies live in `phrases.ts`:
 
 | Input | Action |
