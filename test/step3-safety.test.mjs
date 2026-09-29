@@ -3101,6 +3101,53 @@ test(
 
 
 test(
+  "STEP3 regression: spoken bundle quantities are grounded like digits",
+  async () => {
+    const lookupWith = async (answer) =>
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder:
+            async () => ({
+              text: answer,
+              model: "fake-model",
+              stopReason: "end_turn",
+            }),
+        },
+      ).lookup(
+        "How much is the Turkish breakfast for two?",
+      );
+
+    for (const answer of [
+      "The Turkish Breakfast Spread for two is £29.95.",
+      "The Turkish Breakfast Spread is £29.95 for two.",
+      "The Turkish Breakfast Spread for two people is £29.95.",
+      "The Turkish Breakfast Spread is £29.95 for two people.",
+      "The Turkish Breakfast Spread for 2 people is £29.95.",
+    ]) {
+      assert.equal(
+        (await lookupWith(answer)).status,
+        "answered",
+        answer,
+      );
+    }
+
+    for (const answer of [
+      "The Turkish Breakfast Spread for two people is £52.95.",
+      "The Turkish Breakfast Spread for four people is £29.95.",
+      "The Turkish Breakfast Spread for two is £29.95, and it serves seven.",
+    ]) {
+      assert.equal(
+        (await lookupWith(answer)).status,
+        "unavailable",
+        answer,
+      );
+    }
+  },
+);
+
+
+test(
   "STEP3 regression: Cappuccino base-price question rejects unsolicited section extras",
   async () => {
     const service =

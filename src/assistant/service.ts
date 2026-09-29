@@ -515,6 +515,12 @@ function collectSupportedPriceAmounts(
   ]);
 }
 
+// Spoken quantities ("for two") are grounded by the digits in the source data ("for 2").
+const NUMBER_WORDS: Readonly<Record<string, string>> = {
+  one: "1", two: "2", three: "3", four: "4", five: "5", six: "6",
+  seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12",
+};
+
 function parseClaimedMajorAmount(
   value: string,
 ): number | undefined {
@@ -877,20 +883,31 @@ function hasSupportedBundlePeopleClaims(
 ): boolean {
   const normalized = text.normalize("NFKC");
   const peopleTerms = normalized.match(/\b(?:person|people)\b/giu) ?? [];
-  const pairs = [...normalized.matchAll(
-    /(?:\u00a3|\bGBP)\s*(\d+(?:[.,]\d{1,2})?)\s+for\s+(\d+)\s+(?:person|people)\b/giu,
-  )];
+  const quantity = `(\\d+|${Object.keys(NUMBER_WORDS).join("|")})`;
+  const price = "(?:\\u00a3|\\bGBP)\\s*(\\d+(?:[.,]\\d{1,2})?)";
+  const pairs = [
+    // "\u00a329.95 for 2 people"
+    ...[...normalized.matchAll(
+      new RegExp(`${price}\\s+for\\s+${quantity}\\s+(?:person|people)\\b`, "giu"),
+    )].map((match) => ({ amount: match[1], people: match[2] })),
+    // "for two people is \u00a329.95"
+    ...[...normalized.matchAll(
+      new RegExp(`\\bfor\\s+${quantity}\\s+(?:person|people)\\s+(?:is|are|costs?)\\s+${price}`, "giu"),
+    )].map((match) => ({ amount: match[2], people: match[1] })),
+  ];
 
   return (
     peopleTerms.length > 0 &&
     pairs.length === peopleTerms.length &&
-    pairs.every((pair) =>
-      context.item.pricing.options.some((option) =>
+    pairs.every((pair) => {
+      const people = pair.people?.toLowerCase() ?? "";
+
+      return context.item.pricing.options.some((option) =>
         option.kind === "bundle" &&
-        option.qualifiers.quantity === Number(pair[2]) &&
-        option.amount_minor === parseClaimedMajorAmount(pair[1] ?? ""),
-      ),
-    )
+        option.qualifiers.quantity === Number(NUMBER_WORDS[people] ?? people) &&
+        option.amount_minor === parseClaimedMajorAmount(pair.amount ?? ""),
+      );
+    })
   );
 }
 
@@ -985,6 +1002,7 @@ function hasUnsupportedResponseTerm(
     (term) =>
       !/^\d+p$/u.test(term) &&
       !grounded.has(term) &&
+      !itemTerms.has(NUMBER_WORDS[term] ?? "") &&
       !RESPONSE_GLUE_TERMS.has(term),
   );
 }
