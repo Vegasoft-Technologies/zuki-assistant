@@ -19,7 +19,7 @@ Rules run in this order; phrase lists and fixed replies live in `phrases.ts`:
 | Input | Action |
 | --- | --- |
 | Last message is not user | Empty assistant turn, stop |
-| Yes/no after the exact reservation offer | Transfer / “No problem.” |
+| Yes/no after the reservation or clarify offer | Transfer / “No problem.” |
 | Explicit human request | Transfer |
 | Book / reserve / reservation / hold a table | Reservation offer; await acceptance |
 | Greeting only, optionally “how are you” | “Hello! How can I help you?” |
@@ -27,7 +27,8 @@ Rules run in this order; phrase lists and fixed replies live in `phrases.ts`:
 | Empty/filler only | Ask the caller to repeat |
 | Everything else | One lookup with the original whole turn |
 | Lookup answered / clarification_required | Speak returned text with spoken prices; no appended question |
-| Lookup transfer_required / unavailable / error / empty text | Transfer |
+| Lookup unavailable, or transfer_required for a generic reason (no source-backed answer, unreadable characters, incomplete knowledge) | Clarify offer: “I'm sorry, I'm not sure about that. Would you like me to transfer you to someone from our team?” — only once per call; a second generic fallback transfers |
+| Lookup transfer_required for a deliberate reason (live availability, multi-intent, unverified topic details) / error / empty text | Transfer |
 
 Transfer turns emit only a `transferCall` function call. Its destination comes from
 the request tool's single-value destination enum, then `ZUKI_TEST_TRANSFER_NUMBER`.

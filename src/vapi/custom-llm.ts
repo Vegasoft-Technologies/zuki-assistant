@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
-import { PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "./phrases.js";
+import { GENERIC_FALLBACK_REASONS, type KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
+import { CLARIFY_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "./phrases.js";
 
 export type Action = { kind: "speak"; text: string } | { kind: "transfer"; destination: string } | { kind: "silent" };
 export type Message = { role: string; content?: string | { type: string; text?: string | undefined }[] | null | undefined };
@@ -86,8 +86,11 @@ export async function routeConversation(
   const normalized = normalizeForClassification(turn);
   const speak = (text: string): Action => ({ kind: "speak", text });
   const transfer = () => transferAction(tools, fallback);
-  const previous = messages.slice(0, -1).findLast((message) => message.role === "assistant");
-  if (previous && normalizeForClassification(content(previous)).includes("can't make reservations")) {
+  const assistantTurns = messages.slice(0, -1).filter((message) => message.role === "assistant")
+    .map((message) => normalizeForClassification(content(message)));
+  const clarifyOffer = normalizeForClassification(CLARIFY_OFFER);
+  const previous = assistantTurns.at(-1);
+  if (previous !== undefined && (previous.includes("can't make reservations") || previous.includes(clarifyOffer))) {
     if (new RegExp(`^(?:${alternatives(PHRASES.yes)})(?:[ ,]+(?:please|thanks))?$`).test(normalized)) return transfer();
     const asksQuestion = turn.includes("?") ||
       new RegExp(`\\b(?:${alternatives(PHRASES.questionWords)})\\b`).test(normalized);
@@ -104,10 +107,15 @@ export async function routeConversation(
   const closer = closingAction(normalized);
   if (closer) return closer;
   if (PHRASES.filler.some((phrase) => phrase === normalized)) return speak(REPLIES.filler);
+  let result: Awaited<ReturnType<KnowledgeSafeAssistantService["lookup"]>>;
   try {
-    const result = await service.lookup(turn);
-    if ((result.status === "answered" || result.status === "clarification_required") && result.text?.trim()) return speak(toSpokenPrices(result.text));
-  } catch { /* Lookup failures follow the same transfer path, without exposing errors. */ }
+    result = await service.lookup(turn);
+  } catch { return transfer(); /* Lookup failures transfer directly, without exposing errors. */ }
+  if ((result.status === "answered" || result.status === "clarification_required") && result.text?.trim()) return speak(toSpokenPrices(result.text));
+  // Unknown or misheard requests get one transfer offer per call; deliberate transfers stay direct.
+  const generic = result.status === "unavailable" ||
+    (result.status === "transfer_required" && GENERIC_FALLBACK_REASONS.has(result.reason));
+  if (generic && !assistantTurns.some((text) => text.includes(clarifyOffer))) return speak(CLARIFY_OFFER);
   return transfer();
 }
 

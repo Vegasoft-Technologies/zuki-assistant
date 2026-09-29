@@ -1,4 +1,5 @@
 export const RESERVATION_OFFER = "I'm sorry, I can't make reservations. Would you like me to transfer you to someone who can help?";
+export const CLARIFY_OFFER = "I'm sorry, I'm not sure about that. Would you like me to transfer you to someone from our team?";
 export const TRANSFER_FAILURE = "I'm sorry, I couldn't connect you to someone right now. Please try again later.";
 
 export const PHRASES = {

@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { routeConversation, toSpokenPrices, buildSse, buildCompletion, transferToolShape } from "../dist/vapi/custom-llm.js";
-import { PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "../dist/vapi/phrases.js";
+import { CLARIFY_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "../dist/vapi/phrases.js";
 import { createApiServer } from "../dist/api/server.js";
+import { createKnowledgeSafeAssistantService } from "../dist/assistant/knowledge-safe-service.js";
+import { loadZukiData } from "../dist/data/loader.js";
+import { transformZukiData } from "../dist/data/transformer.js";
 
 const destination = "+12025550100";
 const tools = [{ type: "function", function: { name: "transferCall", parameters: {
@@ -138,7 +141,7 @@ test("lookup receives whole original turns exactly once, including text parts an
 });
 
 test("lookup status, failures and destination fallback determine actions", async () => {
-  for (const result of [{ status: "transfer_required" }, { status: "unavailable" }, { status: "answered", text: " " }, { status: "clarification_required", text: "" }, null]) {
+  for (const result of [{ status: "transfer_required" }, { status: "transfer_required", reason: "The request cannot be verified from current menu information." }, { status: "answered", text: " " }, { status: "clarification_required", text: "" }, null]) {
     const service = { lookup: async () => { if (result === null) throw Error("private"); return result; } };
     assert.deepEqual(await routeConversation([user("sushi?")], tools, service, "+12025550101"), transfer);
     assertTransfer(chunks(buildSse(await routeConversation([user("sushi?")], tools, service))));
@@ -155,6 +158,33 @@ test("lookup status, failures and destination fallback determine actions", async
   const shape = JSON.stringify(transferToolShape(tools));
   assert.ok(shape.includes("destination"));
   assert.ok(!shape.includes(destination));
+});
+
+test("generic fallbacks offer one transfer per call; deliberate transfers stay direct", async () => {
+  const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()));
+  for (const turn of ["What is the wifi password?", "Blah flurb cappucheeno?"]) {
+    assert.deepEqual(await routeConversation([user(turn)], tools, service), speak(CLARIFY_OFFER), turn);
+  }
+  for (const turn of ["Where are you and do you have sushi?", "Is the cappuccino available today?", "Can I speak to a human?"]) {
+    assert.deepEqual(await routeConversation([user(turn)], tools, service), transfer, turn);
+  }
+  const unavailable = { lookup: async () => ({ status: "unavailable", reason: "claude_response_ungrounded", text: "private" }) };
+  assert.deepEqual(await routeConversation([user("How much is it?")], tools, unavailable), speak(CLARIFY_OFFER));
+
+  const offer = { role: "assistant", content: CLARIFY_OFFER };
+  for (const yes of ["yes", "yes please", "okay", "sure thanks"]) {
+    assert.deepEqual(await routeConversation([user("wifi?"), offer, user(yes)], tools, noLookup), transfer, yes);
+  }
+  for (const no of ["no", "no thanks", "Nah."]) {
+    assert.deepEqual(await routeConversation([user("wifi?"), offer, user(no)], tools, noLookup), speak(REPLIES.declined), no);
+  }
+  const answered = { lookup: async () => ({ status: "answered", text: "A cappuccino is £3.55." }) };
+  assert.deepEqual(await routeConversation([user("How much is a capuchino?"), offer, user("How much is a cappuccino?")], tools, answered), speak("A cappuccino is 3 pounds 55."));
+
+  // A second generic fallback in the same call transfers instead of looping.
+  const history = [user("wifi?"), offer, user("How much is a cappuccino?"), { role: "assistant", content: "A cappuccino is 3 pounds 55." }];
+  assert.deepEqual(await routeConversation([...history, user("What is the wifi password?")], tools, service), transfer);
+  assert.deepEqual(await routeConversation([user("wifi?"), { role: "assistant", content: `Hmm. ${CLARIFY_OFFER}` }, user("Blah flurb?")], tools, service), transfer);
 });
 
 test("SSE and JSON builders cover speak, silent and transfer completions", () => {
