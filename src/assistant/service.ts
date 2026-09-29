@@ -877,44 +877,64 @@ function collectGroundingTerms(
   }
 }
 
-function hasSupportedBundlePeopleClaims(
+function hasSupportedBundleQuantityClaims(
   context: MenuItemContext,
   text: string,
 ): boolean {
   const normalized = text.normalize("NFKC");
-  const peopleTerms = normalized.match(/\b(?:person|people)\b/giu) ?? [];
   const quantity = `(\\d+|${Object.keys(NUMBER_WORDS).join("|")})`;
-  const price = "(?:\\u00a3|\\bGBP)\\s*(\\d+(?:[.,]\\d{1,2})?)";
-  const pairs = [
-    // "\u00a329.95 for 2 people"
-    ...[...normalized.matchAll(
-      new RegExp(`${price}\\s+for\\s+${quantity}\\s+(?:person|people)\\b`, "giu"),
-    )].map((match) => ({ amount: match[1], people: match[2] })),
-    // "for two people is \u00a329.95"
-    ...[...normalized.matchAll(
-      new RegExp(`\\bfor\\s+${quantity}\\s+(?:person|people)\\s+(?:is|are|costs?)\\s+${price}`, "giu"),
-    )].map((match) => ({ amount: match[2], people: match[1] })),
+  const price = "(?:\\u00a3|\\bGBP)\\s*(\\d+(?:[.,]\\d{1,2})?)(?![\\d.,]\\d)";
+  const unit = "(?:\\s+(?:person|people))?";
+  const patterns = [
+    { pattern: `${price}\\s+for\\s+${quantity}\\b${unit}`, priceFirst: true },
+    { pattern: `\\bfor\\s+${quantity}\\b${unit}\\s+(?:is|are|costs?)\\s+${price}`, priceFirst: false },
   ];
+  let remaining = normalized;
+  let pairCount = 0;
+  let supported = true;
 
-  return (
-    peopleTerms.length > 0 &&
-    pairs.length === peopleTerms.length &&
-    pairs.every((pair) => {
-      const people = pair.people?.toLowerCase() ?? "";
-
-      return context.item.pricing.options.some((option) =>
+  // Consume complete claims, so two valid menu numbers cannot independently
+  // ground a wrong pairing or hide an additional, unpaired quantity.
+  for (const { pattern, priceFirst } of patterns) {
+    remaining = remaining.replace(new RegExp(pattern, "giu"), (_match, first: string, second: string) => {
+      const rawQuantity = (priceFirst ? second : first).toLowerCase();
+      const rawPrice = priceFirst ? first : second;
+      pairCount += 1;
+      supported &&= context.item.pricing.options.some((option) =>
         option.kind === "bundle" &&
-        option.qualifiers.quantity === Number(NUMBER_WORDS[people] ?? people) &&
-        option.amount_minor === parseClaimedMajorAmount(pair.amount ?? ""),
+        option.qualifiers.quantity === Number(NUMBER_WORDS[rawQuantity] ?? rawQuantity) &&
+        option.amount_minor === parseClaimedMajorAmount(rawPrice),
       );
-    })
+      return " ";
+    });
+  }
+
+  const hasUnpairedQuantity = new RegExp(
+    `\\bfor\\s+${quantity}\\b|\\b(?:person|people)\\b`, "iu",
+  ).test(remaining);
+  // Price-only answers retain the existing price validation. Any quantity
+  // outside a complete pair must fail closed, including "serves three".
+  const unpairedText = pairCount === 0
+    ? remaining.replace(new RegExp(price, "giu"), " ")
+    : remaining;
+  const hasRemainingNumber = extractGroundingTerms(unpairedText).some((term) =>
+    /\d/u.test(term) || NUMBER_WORDS[term] !== undefined,
   );
+
+  return supported && !hasUnpairedQuantity && !hasRemainingNumber;
 }
 
 function hasUnsupportedResponseTerm(
   context: MenuItemContext,
   text: string,
 ): boolean {
+  if (
+    context.item.pricing.options.some((option) => option.kind === "bundle") &&
+    !hasSupportedBundleQuantityClaims(context, text)
+  ) {
+    return true;
+  }
+
   const confirmationLeadIn =
     /^\s*yes\s*,?\s+(?:that['\u2019]s|that is)\s+correct\b/iu;
   let groundingText = text;
@@ -928,7 +948,9 @@ function hasUnsupportedResponseTerm(
     if (
       !asksConfirmation ||
       queryPrices.length === 0 ||
-      queryPrices.some((amount) => !supportedPrices.has(amount))
+      queryPrices.some((amount) => !supportedPrices.has(amount)) ||
+      (context.item.pricing.options.some((option) => option.kind === "bundle") &&
+        !hasSupportedBundleQuantityClaims(context, context.query.raw))
     ) {
       return true;
     }
@@ -991,7 +1013,7 @@ function hasUnsupportedResponseTerm(
     (/\b(?:person|people)\b/u.test(response) &&
       !itemTerms.has("person") &&
       !itemTerms.has("people") &&
-      !hasSupportedBundlePeopleClaims(context, text))
+      !hasSupportedBundleQuantityClaims(context, text))
   ) {
     return true;
   }

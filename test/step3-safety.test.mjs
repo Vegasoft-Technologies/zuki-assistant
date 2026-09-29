@@ -3148,6 +3148,81 @@ test(
 
 
 test(
+  "STEP3 regression: every breakfast quantity must match its own source price",
+  async () => {
+    const lookupWith = (answer) =>
+      createKnowledgeSafeAssistantService(normalizedData, {
+        claudeResponder: async () => ({
+          text: answer, model: "fake-model", stopReason: "end_turn",
+        }),
+      }).lookup("How much is the Turkish breakfast?");
+
+    for (const [quantity, price] of [
+      ["2", "29.95"], ["two", "29.95"],
+      ["4", "52.95"], ["four", "52.95"],
+      ["2", "52.95"], ["two", "52.95"],
+      ["4", "29.95"], ["four", "29.95"],
+      ["3", "29.95"], ["three", "29.95"],
+      ["3", "52.95"], ["three", "52.95"],
+    ]) {
+      const supported =
+        (["2", "two"].includes(quantity) && price === "29.95") ||
+        (["4", "four"].includes(quantity) && price === "52.95");
+      for (const unit of ["", " people", " person"]) {
+        for (const claim of [
+          `for ${quantity}${unit} is £${price}`,
+          `is £${price} for ${quantity}${unit}`,
+        ]) {
+          const answer = `The Turkish Breakfast Spread ${claim}.`;
+          const result = await lookupWith(answer);
+          assert.equal(result.status, supported ? "answered" : "unavailable", answer);
+          if (supported) assert.equal(result.text, answer);
+          else assert.equal(result.reason, "claude_response_ungrounded", answer);
+        }
+      }
+    }
+
+    for (const [claim, supported] of [
+      ["£29.95 for two and £52.95 for four", true],
+      ["for 2 is £29.95 and for 4 is £52.95", true],
+      ["£52.95 for two and £29.95 for four", false],
+      ["for 2 is £52.95 and for 4 is £29.95", false],
+      ["£29.95 for two and £29.95 for four", false],
+      ["£29.95 for two or three", false],
+      ["£29.95 for two and for 3", false],
+      ["for 2 or 4 is £29.95", false],
+      ["for 3 is 29.95 pounds", false],
+      ["for four is GBP 29.95", false],
+      ["£29.95 and serves three", false],
+      ["£29.95 for two. It serves 4", false],
+    ]) {
+      const answer = `The Turkish Breakfast Spread is ${claim}.`;
+      const result = await lookupWith(answer);
+      assert.equal(result.status, supported ? "answered" : "unavailable", answer);
+    }
+  },
+);
+
+test(
+  "STEP3 regression: confirmation cannot endorse a swapped bundle price",
+  async () => {
+    for (const [quantity, price, supported] of [
+      ["two", "29.95", true], ["four", "52.95", true],
+      ["two", "52.95", false], ["four", "29.95", false],
+    ]) {
+      const answer = "Yes, that's correct.";
+      const result = await createKnowledgeSafeAssistantService(normalizedData, {
+        claudeResponder: async () => ({
+          text: answer, model: "fake-model", stopReason: "end_turn",
+        }),
+      }).lookup(`Is the Turkish breakfast £${price} for ${quantity}?`);
+      assert.equal(result.status, supported ? "answered" : "unavailable", `${quantity}: ${price}`);
+      if (!supported) assert.equal(result.reason, "claude_response_ungrounded");
+    }
+  },
+);
+
+test(
   "STEP3 regression: Cappuccino base-price question rejects unsolicited section extras",
   async () => {
     const service =
