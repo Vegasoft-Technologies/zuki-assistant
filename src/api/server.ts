@@ -4,7 +4,7 @@ import cors from "cors";
 import { z } from "zod";
 import type { KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
 
-import { buildCompletion, buildSse, routeConversation, transferAction, transferToolShape } from "../vapi/custom-llm.js";
+import { buildCompletion, buildSse, createOfferMemory, routeConversation, transferAction, transferToolShape } from "../vapi/custom-llm.js";
 
 const completionRequestSchema = z.object({
   messages: z.array(z.object({
@@ -13,6 +13,8 @@ const completionRequestSchema = z.object({
   })),
   tools: z.array(z.unknown()).optional(),
   stream: z.boolean().optional(),
+  // Only the id is used; a malformed call object must never reject the turn.
+  call: z.object({ id: z.string().min(1) }).optional().catch(undefined),
 });
 
 function sendCompletion(res: Response, action: Parameters<typeof buildCompletion>[0], stream = true) {
@@ -105,6 +107,8 @@ export function createApiServer(
   const app = express();
 
   let loggedTransferShape = false;
+  let loggedCallId = false;
+  const offerMemory = createOfferMemory();
 
   app.use(cors());
   app.use(express.json({ limit: "100kb" }));
@@ -119,7 +123,7 @@ export function createApiServer(
       res.status(400).json({ error: "Invalid request format", details: z.treeifyError(parsed.error) });
       return;
     }
-    const { messages, tools, stream } = parsed.data;
+    const { messages, tools, stream, call } = parsed.data;
     try {
       if (!loggedTransferShape) {
         const shape = transferToolShape(tools);
@@ -128,7 +132,12 @@ export function createApiServer(
           console.info("Vapi transferCall schema:", shape);
         }
       }
-      const action = await routeConversation(messages, tools, assistantService, process.env.ZUKI_TEST_TRANSFER_NUMBER);
+      if (!loggedCallId) {
+        loggedCallId = true;
+        console.info("Vapi custom LLM request has call id:", call !== undefined);
+      }
+      const offers = call ? offerMemory.forCall(call.id) : undefined;
+      const action = await routeConversation(messages, tools, assistantService, process.env.ZUKI_TEST_TRANSFER_NUMBER, offers);
       sendCompletion(res, action, stream);
     } catch {
       sendCompletion(res, transferAction(tools, process.env.ZUKI_TEST_TRANSFER_NUMBER), stream);

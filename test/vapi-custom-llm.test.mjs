@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { routeConversation, toSpokenPrices, buildSse, buildCompletion, transferToolShape } from "../dist/vapi/custom-llm.js";
+import { createOfferMemory, routeConversation, toSpokenPrices, buildSse, buildCompletion, transferToolShape } from "../dist/vapi/custom-llm.js";
 import { CLARIFY_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "../dist/vapi/phrases.js";
 import { createApiServer } from "../dist/api/server.js";
 import { createKnowledgeSafeAssistantService } from "../dist/assistant/knowledge-safe-service.js";
@@ -187,6 +187,68 @@ test("generic fallbacks offer one transfer per call; deliberate transfers stay d
   assert.deepEqual(await routeConversation([user("wifi?"), { role: "assistant", content: `Hmm. ${CLARIFY_OFFER}` }, user("Blah flurb?")], tools, service), transfer);
 });
 
+test("offers are remembered per call even when Vapi rewrites spoken assistant turns", async () => {
+  const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()));
+  const memory = createOfferMemory();
+  const system = { role: "system", content: "system prompt" };
+  // Vapi returns a speech transcript of what the bot said, not the text we sent.
+  const greeting = { role: "assistant", content: "Hold your breath The system. How can I help you?" };
+  const heardOffer = { role: "assistant", content: "I'm sorry I'm not so. Would you like me to trans for you to someone from a tea?" };
+  const start = [system, greeting, user("What is the wifi password?")];
+
+  for (const [reply, expected] of [["No thanks", speak(REPLIES.declined)], ["Nah.", speak(REPLIES.declined)], ["yes please", transfer]]) {
+    const offers = memory.forCall(`call-${reply}`);
+    assert.deepEqual(await routeConversation(start, tools, service, undefined, offers), speak(CLARIFY_OFFER));
+    assert.deepEqual(await routeConversation([...start, heardOffer, user(reply)], tools, service, undefined, offers), expected, reply);
+  }
+
+  // A second generic fallback in the same call transfers, even though the offer text was garbled.
+  const offers = memory.forCall("call-second");
+  await routeConversation(start, tools, service, undefined, offers);
+  const afterAnswer = [...start, heardOffer, user("What time do you open on Sunday?")];
+  assert.equal((await routeConversation(afterAnswer, tools, service, undefined, offers)).kind, "speak");
+  const heardAnswer = { role: "assistant", content: "On Sunday, the cookies opens at 10 AM." };
+  assert.deepEqual(await routeConversation([...afterAnswer, heardAnswer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), transfer);
+
+  // Another call starts fresh.
+  assert.deepEqual(await routeConversation(start, tools, service, undefined, memory.forCall("call-other")), speak(CLARIFY_OFFER));
+
+  // A discarded speculative answer for the same user turn is replaced by the final one.
+  const speculative = memory.forCall("call-speculative");
+  assert.deepEqual(await routeConversation([system, greeting, user("What is the")], tools, service, undefined, speculative), speak(CLARIFY_OFFER));
+  assert.equal((await routeConversation([system, greeting, user("What time do you open on Sunday?")], tools, service, undefined, speculative)).kind, "speak");
+  const next = [system, greeting, user("What time do you open on Sunday?"), heardAnswer, user("Do you have pineapple pizza?")];
+  assert.deepEqual(await routeConversation(next, tools, service, undefined, speculative), speak(CLARIFY_OFFER));
+});
+
+test("offer text fallback and memory expiry", async () => {
+  let time = 0;
+  const memory = createOfferMemory(1000, () => time);
+  memory.forCall("old").record(1, "clarify");
+  assert.equal(memory.forCall("old").at(1), "clarify");
+  time = 5000;
+  memory.forCall("new").record(1, null);
+  assert.equal(memory.forCall("old").at(1), undefined);
+
+  // Without a call id, surviving keywords still identify the offer.
+  for (const heard of ["I'm sorry, I'm not sure about that. Would you like me to transfer you?", "Sorry I can't make reservations would you like"]) {
+    assert.deepEqual(await routeConversation([user("x"), { role: "assistant", content: heard }, user("no thanks")], tools, noLookup), speak(REPLIES.declined), heard);
+  }
+  assert.deepEqual(await routeConversation([{ role: "assistant", content: "Hold your breath The system." }, user("no thanks")], tools, noLookup), speak(REPLIES.goodbye));
+});
+
+test("HTTP custom LLM keeps the transfer offer across requests of the same call", async () => {
+  const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()));
+  await withServer(service, async (url) => {
+    const post = async (messages, call) => (await (await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, tools, stream: false, ...(call === undefined ? {} : { call }) }) })).json()).choices[0].message.content;
+    const start = [{ role: "assistant", content: "Hello, you reached the Zucchini System." }, user("What is the wifi password?")];
+    const heardOffer = { role: "assistant", content: "Want to be boys to some one?" };
+    assert.equal(await post(start, { id: "call-http", extra: true }), CLARIFY_OFFER);
+    assert.equal(await post([...start, heardOffer, user("No thanks")], { id: "call-http" }), REPLIES.declined);
+    assert.equal(await post([...start, heardOffer, user("No thanks")], { id: 42 }), REPLIES.goodbye);
+  });
+});
+
 test("SSE and JSON builders cover speak, silent and transfer completions", () => {
   for (const action of [speak("Hello!"), { kind: "silent" }, transfer]) {
     const parts = chunks(buildSse(action));
@@ -285,12 +347,16 @@ test("HTTP validation retains JSON error conventions and 100kb body limit", asyn
 test("internal route errors return a valid transfer and schema logging occurs once", async (t) => {
   const info = t.mock.method(console, "info", () => { throw Error("internal logger error"); });
   await withServer(noLookup, async (url) => {
-    for (let i = 0; i < 2; i++) {
-      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [user("human")], tools, stream: true }) });
+    for (let i = 0; i < 3; i++) {
+      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [user("human")], tools, stream: true, call: { id: "call-1" } }) });
       assert.equal(response.status, 200);
       assertTransfer(chunks(await response.text()));
     }
-    assert.equal(info.mock.callCount(), 1);
-    assert.ok(!JSON.stringify(info.mock.calls[0].arguments).includes(destination));
+    // The transfer schema and the call-id presence are each logged once, never per request.
+    assert.equal(info.mock.callCount(), 2);
+    for (const call of info.mock.calls) {
+      assert.ok(!JSON.stringify(call.arguments).includes(destination));
+      assert.ok(!JSON.stringify(call.arguments).includes("call-1"));
+    }
   });
 });
