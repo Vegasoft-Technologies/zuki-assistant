@@ -71,6 +71,21 @@ export interface KnowledgeSafeAssistantService {
 const TRANSFER_TEXT =
   "I'm not sure about that. Let me transfer you to someone who can help.";
 
+const UNSAFE_CHARACTERS_REASON =
+  "The request contains characters that cannot be interpreted safely.";
+const NO_SOURCE_REASON =
+  "No source-backed answer was found for the request.";
+const INCOMPLETE_KNOWLEDGE_REASON =
+  "Knowledge result was incomplete.";
+
+// Transfers caused by not understanding or not finding the request, as opposed
+// to deliberate transfers (live availability, multi-intent, unverified topics).
+export const GENERIC_FALLBACK_REASONS: ReadonlySet<string> = new Set([
+  UNSAFE_CHARACTERS_REASON,
+  NO_SOURCE_REASON,
+  INCOMPLETE_KNOWLEDGE_REASON,
+]);
+
 export function createKnowledgeSafeAssistantService(
   data: NormalizedZukiData,
   options: AssistantServiceOptions = {},
@@ -95,8 +110,7 @@ export function createKnowledgeSafeAssistantService(
           query,
           source: "local",
           text: TRANSFER_TEXT,
-          reason:
-            "The request contains characters that cannot be interpreted safely.",
+          reason: UNSAFE_CHARACTERS_REASON,
         };
       }
 
@@ -216,8 +230,7 @@ export function createKnowledgeSafeAssistantService(
               query,
               source: "local",
               text: TRANSFER_TEXT,
-              reason:
-                "No source-backed answer was found for the request.",
+              reason: NO_SOURCE_REASON,
             };
           }
 
@@ -251,8 +264,7 @@ export function createKnowledgeSafeAssistantService(
             query,
             source: "local",
             text: TRANSFER_TEXT,
-            reason:
-              "Knowledge result was incomplete.",
+            reason: INCOMPLETE_KNOWLEDGE_REASON,
           };
         }
 
@@ -297,8 +309,7 @@ export function createKnowledgeSafeAssistantService(
           query,
           source: "local",
           text: TRANSFER_TEXT,
-          reason:
-            "No source-backed answer was found for the request.",
+          reason: NO_SOURCE_REASON,
         };
       }
 
