@@ -31,6 +31,7 @@ import type {
 
 import {
   lookupBusinessKnowledge,
+  stripOpeningHoursIntentPrefix,
 } from "../knowledge/router.js";
 
 type KnowledgeTopic =
@@ -147,7 +148,7 @@ export function createKnowledgeSafeAssistantService(
       }
 
       const explicitMenuQuestion =
-        /\band\s+(?:do you(?: guys)? (?:have|serve|sell)|how much (?:is|are)|what(?:s| is) the price)\b/u.test(normalizedQuery);
+        /\band\s+(?:(?:do|will) you(?: guys)? (?:have|serve|sell)|how much (?:is|are)|what(?:s| is) the price|will\s+.{1,64}\s+be available)\b/u.test(normalizedQuery);
 
       if (
         unsupportedSecondProduct ||
@@ -185,10 +186,7 @@ export function createKnowledgeSafeAssistantService(
 
             const normalizedClause = normalizeMatchText(clause);
             const availabilityQuery = knowledge.topic === "opening_hours"
-              ? normalizedClause.replace(
-                  /^(?:(?:(?:what time|when)\s+)?(?:are|do) you|is the cafe)\s+(?:open|close)\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u,
-                  "",
-                ).trim()
+              ? stripOpeningHoursIntentPrefix(normalizedClause)
               : normalizedClause;
 
             return requiresLiveAvailabilityVerification(

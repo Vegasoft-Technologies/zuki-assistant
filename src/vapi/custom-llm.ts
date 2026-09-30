@@ -81,26 +81,43 @@ export type Offer = "reservation" | "clarify";
 // null = we answered without an offer; undefined = no record (e.g. first message, server restart).
 export interface CallOffers {
   at(userTurn: number): Offer | null | undefined;
+  begin(userTurn: number): (offer: Offer | null) => void;
   record(userTurn: number, offer: Offer | null): void;
 }
 
 // Vapi replaces spoken assistant turns with a speech transcript of them ("Zuki's" → "Zucchini"),
 // so offers are remembered per call and keyed by the user turn they answered, not matched by text.
 export function createOfferMemory(ttlMs = 2 * 60 * 60 * 1000, now = () => Date.now()) {
-  const calls = new Map<string, { seenAt: number; offers: Map<number, Offer | null> }>();
+  const calls = new Map<string, { seenAt: number; offers: Map<number, { offer: Offer | null | undefined }> }>();
+  const current = (callId: string) => {
+    const call = calls.get(callId);
+    if (call && now() - call.seenAt > ttlMs) {
+      calls.delete(callId);
+      return undefined;
+    }
+    return call;
+  };
   return {
     forCall(callId: string): CallOffers {
-      return {
-        at: (userTurn) => calls.get(callId)?.offers.get(userTurn),
-        record: (userTurn, offer) => {
+      const begin = (userTurn: number) => {
           const time = now();
           for (const [id, call] of calls) if (time - call.seenAt > ttlMs) calls.delete(id);
           const call = calls.get(callId) ?? { seenAt: time, offers: new Map() };
           call.seenAt = time;
-          // A later request for the same user turn replaces a discarded speculative answer.
-          call.offers.set(userTurn, offer);
+          const entry = { offer: call.offers.get(userTurn)?.offer };
+          call.offers.set(userTurn, entry);
           calls.set(callId, call);
-        },
+          return (offer: Offer | null) => {
+            if (current(callId)?.offers.get(userTurn) === entry) {
+              entry.offer = offer;
+              call.seenAt = now();
+            }
+          };
+      };
+      return {
+        at: (userTurn) => current(callId)?.offers.get(userTurn)?.offer,
+        begin,
+        record: (userTurn, offer) => begin(userTurn)(offer),
       };
     },
   };
@@ -123,8 +140,9 @@ export async function routeConversation(
   offers?: CallOffers,
 ): Promise<Action> {
   const userTurn = messages.filter((message) => message.role === "user").length;
+  const recordOffer = messages.at(-1)?.role === "user" ? offers?.begin(userTurn) : undefined;
   const action = await decide(messages, tools, service, fallback, offers);
-  if (messages.at(-1)?.role === "user") offers?.record(userTurn, offerOf(action));
+  recordOffer?.(offerOf(action));
   return action;
 }
 
@@ -168,10 +186,10 @@ async function decide(
     result = await service.lookup(turn);
   } catch { return transfer(); /* Lookup failures transfer directly, without exposing errors. */ }
   if ((result.status === "answered" || result.status === "clarification_required") && result.text?.trim()) return speak(toSpokenPrices(result.text));
-  // Unknown or misheard requests get one transfer offer per call; deliberate transfers stay direct.
+  // Consecutive generic fallbacks transfer after an offer; deliberate transfers stay direct.
   const generic = result.status === "unavailable" ||
     (result.status === "transfer_required" && GENERIC_FALLBACK_REASONS.has(result.reason));
-  if (generic && !pastOffers.includes("clarify")) return speak(CLARIFY_OFFER);
+  if (generic && pastOffers.at(-1) !== "clarify") return speak(CLARIFY_OFFER);
   return transfer();
 }
 

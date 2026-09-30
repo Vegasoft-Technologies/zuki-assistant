@@ -160,7 +160,25 @@ test("lookup status, failures and destination fallback determine actions", async
   assert.ok(!shape.includes(destination));
 });
 
-test("generic fallbacks offer one transfer per call; deliberate transfers stay direct", async () => {
+test("phone knowledge transcripts route to normal answers with spoken prices", async () => {
+  const data = transformZukiData(await loadZukiData());
+  for (const [turn, response, expected] of [
+    ["How much is a cappuccino?", "A cappuccino is £3.55.", "A cappuccino is 3 pounds 55."],
+    ["How much is the Turkish breakfast for two?", "The Turkish Breakfast Spread is £29.95 for 2 people.", "The Turkish Breakfast Spread is 29 pounds 95 for 2 people."],
+    ["What time do you close on Sunday?", undefined, "On sunday, Zuki's closes at 4 PM."],
+  ]) {
+    const service = createKnowledgeSafeAssistantService(data, { claudeResponder: async () => {
+      assert.notEqual(response, undefined, "opening hours should be answered locally");
+      return { text: response, model: "test", stopReason: "end_turn" };
+    } });
+    const action = await routeConversation([user(turn)], tools, service);
+    assert.equal(action.kind, "speak", turn);
+    assert.equal(action.text, expected, turn);
+    assert.ok(!action.text.includes("£"), turn);
+  }
+});
+
+test("generic fallbacks offer transfer again after an answer; consecutive fallbacks transfer directly", async () => {
   const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()));
   for (const turn of ["What is the wifi password?", "Blah flurb cappucheeno?"]) {
     assert.deepEqual(await routeConversation([user(turn)], tools, service), speak(CLARIFY_OFFER), turn);
@@ -181,9 +199,9 @@ test("generic fallbacks offer one transfer per call; deliberate transfers stay d
   const answered = { lookup: async () => ({ status: "answered", text: "A cappuccino is £3.55." }) };
   assert.deepEqual(await routeConversation([user("How much is a capuchino?"), offer, user("How much is a cappuccino?")], tools, answered), speak("A cappuccino is 3 pounds 55."));
 
-  // A second generic fallback in the same call transfers instead of looping.
+  // An answered question allows a new offer; an immediate generic fallback still transfers.
   const history = [user("wifi?"), offer, user("How much is a cappuccino?"), { role: "assistant", content: "A cappuccino is 3 pounds 55." }];
-  assert.deepEqual(await routeConversation([...history, user("What is the wifi password?")], tools, service), transfer);
+  assert.deepEqual(await routeConversation([...history, user("What is the wifi password?")], tools, service), speak(CLARIFY_OFFER));
   assert.deepEqual(await routeConversation([user("wifi?"), { role: "assistant", content: `Hmm. ${CLARIFY_OFFER}` }, user("Blah flurb?")], tools, service), transfer);
 });
 
@@ -202,13 +220,14 @@ test("offers are remembered per call even when Vapi rewrites spoken assistant tu
     assert.deepEqual(await routeConversation([...start, heardOffer, user(reply)], tools, service, undefined, offers), expected, reply);
   }
 
-  // A second generic fallback in the same call transfers, even though the offer text was garbled.
+  // Memory preserves the immediate transfer and allows a new offer after an answer.
   const offers = memory.forCall("call-second");
   await routeConversation(start, tools, service, undefined, offers);
+  assert.deepEqual(await routeConversation([...start, heardOffer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), transfer);
   const afterAnswer = [...start, heardOffer, user("What time do you open on Sunday?")];
   assert.equal((await routeConversation(afterAnswer, tools, service, undefined, offers)).kind, "speak");
   const heardAnswer = { role: "assistant", content: "On Sunday, the cookies opens at 10 AM." };
-  assert.deepEqual(await routeConversation([...afterAnswer, heardAnswer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), transfer);
+  assert.deepEqual(await routeConversation([...afterAnswer, heardAnswer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), speak(CLARIFY_OFFER));
 
   // Another call starts fresh.
   assert.deepEqual(await routeConversation(start, tools, service, undefined, memory.forCall("call-other")), speak(CLARIFY_OFFER));
@@ -227,6 +246,7 @@ test("offer text fallback and memory expiry", async () => {
   memory.forCall("old").record(1, "clarify");
   assert.equal(memory.forCall("old").at(1), "clarify");
   time = 5000;
+  assert.equal(memory.forCall("old").at(1), undefined);
   memory.forCall("new").record(1, null);
   assert.equal(memory.forCall("old").at(1), undefined);
 
@@ -247,6 +267,826 @@ test("HTTP custom LLM keeps the transfer offer across requests of the same call"
     assert.equal(await post([...start, heardOffer, user("No thanks")], { id: "call-http" }), REPLIES.declined);
     assert.equal(await post([...start, heardOffer, user("No thanks")], { id: 42 }), REPLIES.goodbye);
   });
+});
+
+test("HTTP concurrent corrections preserve the latest request's offer state", async () => {
+  for (const [older, newer, expected] of [
+    [{ status: "unavailable" }, { status: "answered", text: "A cappuccino is £3.55." }, CLARIFY_OFFER],
+    [{ status: "answered", text: "A cappuccino is £3.55." }, { status: "unavailable" }, undefined],
+  ]) {
+    let release;
+    let started;
+    const pending = new Promise((resolve) => { release = resolve; });
+    const entered = new Promise((resolve) => { started = resolve; });
+    const service = { lookup: async (query) => {
+      if (query === "partial") { started(); return pending; }
+      return query === "corrected" ? newer : { status: "unavailable" };
+    } };
+    await withServer(service, async (url) => {
+      const post = async (messages) => {
+        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, tools, stream: false, call: { id: "concurrent-correction" } }) });
+        assert.equal(response.status, 200);
+        return (await response.json()).choices[0];
+      };
+      const stale = post([user("partial")]);
+      await entered;
+      const corrected = await post([user("corrected")]);
+      release(older);
+      await stale;
+      const result = await post([user("corrected"), corrected.message, user("unknown")]);
+      assert.equal(result.message.content, expected);
+      assert.equal(result.finish_reason, expected === undefined ? "tool_calls" : "stop");
+      if (expected === undefined) {
+        assert.equal(result.message.tool_calls[0].function.name, "transferCall");
+        assert.deepEqual(JSON.parse(result.message.tool_calls[0].function.arguments), { destination });
+      }
+    });
+  }
+});
+
+test("multi-turn offer lifecycle uses only the latest offer state", async () => {
+  const service = {
+    lookup: async (query) => {
+      if (query.startsWith("unknown")) {
+        return {
+          status: "unavailable",
+          reason: "claude_response_ungrounded",
+        };
+      }
+
+      if (query === "What time do you open on Sunday?") {
+        return {
+          status: "answered",
+          text: "On sunday, Zuki's opens at 10 AM.",
+        };
+      }
+
+      if (query === "yes please") {
+        return {
+          status: "answered",
+          text: "Lookup handled yes.",
+        };
+      }
+
+      return {
+        status: "answered",
+        text: "Source-backed answer.",
+      };
+    },
+  };
+
+  const memory = createOfferMemory();
+  const offers = memory.forCall("call-long-lifecycle");
+  const system = {
+    role: "system",
+    content: "system prompt",
+  };
+
+  let history = [
+    system,
+    user("unknown one"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak(CLARIFY_OFFER),
+  );
+
+  // Vapi may rewrite what the assistant actually said.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "garbled assistant speech one",
+    },
+    user("no thanks"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak(REPLIES.declined),
+  );
+
+  // A decline clears the previous offer state.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "okay no problem",
+    },
+    user("unknown two"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak(CLARIFY_OFFER),
+  );
+
+  // A real question after the offer is answered normally.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "garbled assistant speech two",
+    },
+    user("What time do you open on Sunday?"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak("On sunday, Zuki's opens at 10 AM."),
+  );
+
+  // "yes" must NOT act on a stale clarification after an answered turn.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "On Sunday the cookies opens at ten",
+    },
+    user("yes please"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak("Lookup handled yes."),
+  );
+
+  // After another ordinary answer, a new unknown gets a fresh offer.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "lookup handled yes",
+    },
+    user("unknown three"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    speak(CLARIFY_OFFER),
+  );
+
+  // But an immediate second unresolved turn after that offer escalates.
+  history = [
+    ...history,
+    {
+      role: "assistant",
+      content: "another garbled assistant transcript",
+    },
+    user("unknown four"),
+  ];
+
+  assert.deepEqual(
+    await routeConversation(
+      history,
+      tools,
+      service,
+      undefined,
+      offers,
+    ),
+    transfer,
+  );
+});
+
+test("HTTP duplicate retries are idempotent and call offer memory is isolated", async () => {
+  const service = {
+    lookup: async (query) => {
+      if (query === "unknown") {
+        return {
+          status: "unavailable",
+          reason: "claude_response_ungrounded",
+        };
+      }
+
+      if (query === "yes please") {
+        return {
+          status: "answered",
+          text: "Lookup handled yes.",
+        };
+      }
+
+      return {
+        status: "answered",
+        text: "Source-backed answer.",
+      };
+    },
+  };
+
+  await withServer(service, async (url) => {
+    const post = async (messages, callId) => {
+      const response = await fetch(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages,
+            tools,
+            stream: false,
+            call: {
+              id: callId,
+            },
+          }),
+        },
+      );
+
+      assert.equal(response.status, 200);
+
+      return (await response.json())
+        .choices[0];
+    };
+
+    const start = [
+      user("unknown"),
+    ];
+
+    const first =
+      await post(
+        start,
+        "call-retry-a",
+      );
+
+    assert.equal(
+      first.message.content,
+      CLARIFY_OFFER,
+    );
+    assert.equal(
+      first.finish_reason,
+      "stop",
+    );
+
+    // Same request retried with the same call/user turn:
+    // it must not advance the offer chain.
+    const retry =
+      await post(
+        start,
+        "call-retry-a",
+      );
+
+    assert.equal(
+      retry.message.content,
+      CLARIFY_OFFER,
+    );
+    assert.equal(
+      retry.finish_reason,
+      "stop",
+    );
+
+    const rewrittenOffer = {
+      role: "assistant",
+      content: "garbled words only",
+    };
+
+    // Call A remembers that this rewritten speech was a clarify offer.
+    const callA =
+      await post(
+        [
+          ...start,
+          rewrittenOffer,
+          user("yes please"),
+        ],
+        "call-retry-a",
+      );
+
+    assert.equal(
+      callA.finish_reason,
+      "tool_calls",
+    );
+    assert.equal(
+      callA.message.tool_calls[0]
+        .function.name,
+      "transferCall",
+    );
+
+    // Call B receives the identical transcript but MUST NOT inherit
+    // Call A's hidden offer state.
+    const callB =
+      await post(
+        [
+          ...start,
+          rewrittenOffer,
+          user("yes please"),
+        ],
+        "call-retry-b",
+      );
+
+    assert.equal(
+      callB.finish_reason,
+      "stop",
+    );
+    assert.equal(
+      callB.message.content,
+      "Lookup handled yes.",
+    );
+  });
+});
+
+test("HTTP JSON and SSE duplicate requests preserve equivalent offer state", async () => {
+  const service = {
+    lookup: async (query) => {
+      if (query === "unknown") {
+        return {
+          status: "unavailable",
+          reason: "claude_response_ungrounded",
+        };
+      }
+
+      return {
+        status: "answered",
+        text: "Source-backed answer.",
+      };
+    },
+  };
+
+  await withServer(service, async (url) => {
+    const start = [
+      user("unknown"),
+    ];
+
+    const base = {
+      messages: start,
+      tools,
+      call: {
+        id: "call-json-sse-parity",
+      },
+    };
+
+    // First delivery as normal JSON.
+    const jsonResponse =
+      await fetch(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...base,
+            stream: false,
+          }),
+        },
+      );
+
+    assert.equal(
+      jsonResponse.status,
+      200,
+    );
+
+    const jsonChoice =
+      (await jsonResponse.json())
+        .choices[0];
+
+    assert.equal(
+      jsonChoice.message.content,
+      CLARIFY_OFFER,
+    );
+    assert.equal(
+      jsonChoice.finish_reason,
+      "stop",
+    );
+
+    // Same user turn retried in streaming mode.
+    // It must produce the same offer, not escalate.
+    const sseResponse =
+      await fetch(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...base,
+            stream: true,
+          }),
+        },
+      );
+
+    assert.equal(
+      sseResponse.status,
+      200,
+    );
+
+    const retryParts =
+      chunks(
+        await sseResponse.text(),
+      );
+
+    assert.equal(
+      retryParts[0]
+        .choices[0]
+        .delta.content,
+      CLARIFY_OFFER,
+    );
+    assert.equal(
+      retryParts.at(-1)
+        .choices[0]
+        .finish_reason,
+      "stop",
+    );
+
+    // The next turn must still see exactly one active clarify offer.
+    const transferResponse =
+      await fetch(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [
+              ...start,
+              {
+                role: "assistant",
+                content: "garbled transcript",
+              },
+              user("yes"),
+            ],
+            tools,
+            stream: true,
+            call: {
+              id: "call-json-sse-parity",
+            },
+          }),
+        },
+      );
+
+    assert.equal(
+      transferResponse.status,
+      200,
+    );
+
+    assertTransfer(
+      chunks(
+        await transferResponse.text(),
+      ),
+    );
+  });
+});
+
+test("HTTP realistic call transcript resets clarification after a real answer", async () => {
+  let claudeCalls = 0;
+
+  const service =
+    createKnowledgeSafeAssistantService(
+      transformZukiData(
+        await loadZukiData(),
+      ),
+      {
+        claudeResponder: async () => {
+          claudeCalls += 1;
+
+          return {
+            text: "A cappuccino is \u00A33.55.",
+            model: "test",
+            stopReason: "end_turn",
+          };
+        },
+      },
+    );
+
+  await withServer(
+    service,
+    async (url) => {
+      const call = {
+        id: "call-realistic-transcript",
+      };
+
+      const post = async (messages) => {
+        const response =
+          await fetch(
+            url,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                messages,
+                tools,
+                stream: false,
+                call,
+              }),
+            },
+          );
+
+        assert.equal(
+          response.status,
+          200,
+        );
+
+        return (
+          await response.json()
+        ).choices[0];
+      };
+
+      let history = [
+        user(
+          "How much is a cappuccino?",
+        ),
+      ];
+
+      const price =
+        await post(history);
+
+      assert.equal(
+        price.finish_reason,
+        "stop",
+      );
+
+      assert.equal(
+        price.message.content,
+        "A cappuccino is 3 pounds 55.",
+      );
+
+      // Simulate Vapi speech transcription rather
+      // than feeding our exact text back.
+      history = [
+        ...history,
+        {
+          role: "assistant",
+          content:
+            "a cappuccino is three pounds fifty five",
+        },
+        user(
+          "What is the wifi password?",
+        ),
+      ];
+
+      const firstUnknown =
+        await post(history);
+
+      assert.equal(
+        firstUnknown.message.content,
+        CLARIFY_OFFER,
+      );
+
+      history = [
+        ...history,
+        {
+          role: "assistant",
+          content:
+            "garbled transfer offer transcript",
+        },
+        user(
+          "what time you close sunday",
+        ),
+      ];
+
+      const hours =
+        await post(history);
+
+      assert.equal(
+        hours.message.content,
+        "On sunday, Zuki's closes at 4 PM.",
+      );
+
+      // The answered hours turn must clear the
+      // previous clarification chain.
+      history = [
+        ...history,
+        {
+          role: "assistant",
+          content:
+            "on sunday zukis closes at four",
+        },
+        user(
+          "What is the wifi password?",
+        ),
+      ];
+
+      const secondUnknown =
+        await post(history);
+
+      assert.equal(
+        secondUnknown.message.content,
+        CLARIFY_OFFER,
+      );
+
+      // Only the immediately consecutive
+      // unresolved turn may escalate.
+      history = [
+        ...history,
+        {
+          role: "assistant",
+          content:
+            "garbled clarification transcript",
+        },
+        user(
+          "Blah flurb cappucheeno?",
+        ),
+      ];
+
+      const escalation =
+        await post(history);
+
+      assert.equal(
+        escalation.finish_reason,
+        "tool_calls",
+      );
+
+      assert.equal(
+        escalation.message.tool_calls[0]
+          .function.name,
+        "transferCall",
+      );
+
+      // Only the actual menu-price turn needed Claude.
+      assert.equal(
+        claudeCalls,
+        1,
+      );
+    },
+  );
+});
+
+test("HTTP three-way speculative corrections cannot overwrite the final state", async () => {
+  let releaseA;
+  let releaseB;
+  let enteredA;
+  let enteredB;
+
+  const pendingA =
+    new Promise((resolve) => {
+      releaseA = resolve;
+    });
+
+  const pendingB =
+    new Promise((resolve) => {
+      releaseB = resolve;
+    });
+
+  const startedA =
+    new Promise((resolve) => {
+      enteredA = resolve;
+    });
+
+  const startedB =
+    new Promise((resolve) => {
+      enteredB = resolve;
+    });
+
+  const unavailable = {
+    status: "unavailable",
+    reason:
+      "claude_response_ungrounded",
+  };
+
+  const service = {
+    lookup: async (query) => {
+      if (query === "stale-a") {
+        enteredA();
+        return pendingA;
+      }
+
+      if (query === "stale-b") {
+        enteredB();
+        return pendingB;
+      }
+
+      if (query === "final") {
+        return {
+          status: "answered",
+          text: "Final answer.",
+        };
+      }
+
+      return unavailable;
+    },
+  };
+
+  await withServer(
+    service,
+    async (url) => {
+      const post =
+        async (messages) => {
+          const response =
+            await fetch(
+              url,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: JSON.stringify({
+                  messages,
+                  tools,
+                  stream: false,
+                  call: {
+                    id:
+                      "three-way-correction",
+                  },
+                }),
+              },
+            );
+
+          assert.equal(
+            response.status,
+            200,
+          );
+
+          return (
+            await response.json()
+          ).choices[0];
+        };
+
+      // Three versions of the SAME user turn.
+      const staleA =
+        post([
+          user("stale-a"),
+        ]);
+
+      await startedA;
+
+      const staleB =
+        post([
+          user("stale-b"),
+        ]);
+
+      await startedB;
+
+      // Final transcript completes first.
+      const final =
+        await post([
+          user("final"),
+        ]);
+
+      assert.equal(
+        final.message.content,
+        "Final answer.",
+      );
+
+      // Now let older speculative requests finish
+      // in reverse order after the final response.
+      releaseB(unavailable);
+      await staleB;
+
+      releaseA(unavailable);
+      await staleA;
+
+      // If either stale request overwrote the final
+      // state, this would transfer immediately.
+      // Correct behavior is a NEW clarification.
+      const next =
+        await post([
+          user("final"),
+          final.message,
+          user("unknown"),
+        ]);
+
+      assert.equal(
+        next.finish_reason,
+        "stop",
+      );
+
+      assert.equal(
+        next.message.content,
+        CLARIFY_OFFER,
+      );
+    },
+  );
 });
 
 test("SSE and JSON builders cover speak, silent and transfer completions", () => {

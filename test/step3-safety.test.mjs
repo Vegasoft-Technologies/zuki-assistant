@@ -300,6 +300,437 @@ test(
   },
 );
 
+test("hours do not substitute restaurant times for meal service times", async () => {
+  let calls = 0;
+  const service = createKnowledgeSafeAssistantService(normalizedData, {
+    claudeResponder: async () => { calls += 1; throw new Error("Unexpected responder"); },
+  });
+  for (const meal of ["breakfast", "brunch", "lunch", "dinner"]) {
+    const query = `How late are you open on Sunday for ${meal}?`;
+    assert.equal(lookupBusinessKnowledge(normalizedData, query).status, "no_match", query);
+    assert.equal((await service.lookup(query)).status, "transfer_required", query);
+  }
+  assert.equal((await service.lookup("How late are you open on Sunday? I might get cappuccino for breakfast.")).text, "On sunday, Zuki's closes at 4 PM.");
+  assert.equal((await service.lookup("How late are you open on Sunday? I might get cappuccino for brunch.")).text, "On sunday, Zuki's closes at 4 PM.");
+  assert.equal(calls, 0);
+});
+
+test("explicit future menu questions transfer even for unknown products", async () => {
+  let calls = 0;
+  const service = createKnowledgeSafeAssistantService(normalizedData, {
+    claudeResponder: async () => { calls += 1; throw new Error("Unexpected responder"); },
+  });
+  for (const query of [
+    "What time are you closing on Sunday and will you have sushi?",
+    "What time are you closing on Sunday and will sushi be available?",
+    "Where are you and will you have sushi?",
+  ]) {
+    assert.equal((await service.lookup(query)).status, "transfer_required", query);
+  }
+  assert.equal(calls, 0);
+});
+
+test("multiple weekdays never receive only one day's hours", async () => {
+  let calls = 0;
+  const service = createKnowledgeSafeAssistantService(normalizedData, {
+    claudeResponder: async () => { calls += 1; throw new Error("Unexpected responder"); },
+  });
+  for (const query of [
+    "What are your hours on Sunday and Monday?",
+    "What time are you closing on Monday and Sunday?",
+    "What are your hours on Sundays and Mondays?",
+  ]) {
+    assert.equal((await service.lookup(query)).status, "transfer_required", query);
+  }
+  assert.equal((await service.lookup("sunday sunday what time do you close")).text, "On sunday, Zuki's closes at 4 PM.");
+  assert.equal(calls, 0);
+});
+
+test(
+  "STEP3 regression: natural hours wording preserves incidental versus live stock intent",
+  async () => {
+    const incidental = [
+      ["How late are you open on Sunday? I might get cappuccino.", "On sunday, Zuki's closes at 4 PM."],
+      ["Until what time are you open on Sunday? I might get cappuccino.", "On sunday, Zuki's closes at 4 PM."],
+      ["When do you shut on Sunday? I might get cappuccino.", "On sunday, Zuki's closes at 4 PM."],
+      ["What are your Sunday hours? I might get cappuccino.", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["What are the opening hours on Sunday? I might get cappuccino.", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["When do you open and close on Sunday? I might get cappuccino.", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+    ];
+
+    const live = [
+      "How late are you open on Sunday and will you have cappuccino?",
+      "Until what time are you open on Sunday and will cappuccino be available?",
+      "When do you shut on Sunday and will you have cappuccino?",
+      "What are your Sunday hours and will cappuccino be available?",
+      "What are the opening hours on Sunday and do you have any cappuccino left?",
+      "When do you open and close on Sunday and will you have cappuccino?",
+    ];
+
+    let calls = 0;
+    const failures = [];
+
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder: async () => {
+            calls += 1;
+            return {
+              text: "Unexpected Claude call",
+              model: "fake-model",
+              stopReason: "end_turn",
+            };
+          },
+        },
+      );
+
+    for (const [query, expected] of incidental) {
+      const result =
+        await service.lookup(query);
+
+      if (
+        result.status !== "answered" ||
+        result.source !== "local" ||
+        result.topic !== "opening_hours" ||
+        result.text !== expected
+      ) {
+        failures.push({
+          kind: "incidental",
+          query,
+          expected,
+          result,
+        });
+      }
+    }
+
+    for (const query of live) {
+      const result =
+        await service.lookup(query);
+
+      if (
+        result.status !== "transfer_required" ||
+        result.source !== "local"
+      ) {
+        failures.push({
+          kind: "live",
+          query,
+          result,
+        });
+      }
+    }
+
+    assert.deepEqual(failures, []);
+    assert.equal(calls, 0);
+  },
+);
+
+test(
+  "STEP3 regression: unrelated open close and hour wording is not business hours",
+  () => {
+    const queries = [
+      "Do you have happy hour on Sunday?",
+      "Can you open a tab on Sunday?",
+      "Can you close my tab on Sunday?",
+      "What are your kitchen hours on Sunday?",
+      "Is the kitchen open on Sunday?",
+      "Is delivery open on Sunday?",
+      "How many hours can I reserve a table on Sunday?",
+    ];
+
+    const failures = [];
+
+    for (const query of queries) {
+      const result =
+        lookupBusinessKnowledge(
+          normalizedData,
+          query,
+        );
+
+      if (
+        result.status !== "no_match" ||
+        result.topic === "opening_hours"
+      ) {
+        failures.push({
+          query,
+          result,
+        });
+      }
+    }
+
+    assert.deepEqual(failures, []);
+  },
+);
+
+test(
+  "STEP3 regression: extended spoken hours grammar stays precise",
+  async () => {
+    const knownCases = [
+      ["What time will you close on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["When will you close on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["How late is the cafe open on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["Till what time are you open on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["What's your closing time on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+
+      ["What time will you open on Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["When will you open Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["What's your opening time on Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["Erm Sunday are you open please", "On sunday, Zuki's opens at 10 AM."],
+
+      ["What hours are you open on Sunday?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["What are the cafe hours on Sunday?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["Sunday opening hours?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+    ];
+
+    const scopedCases = [
+      "What are your hours for delivery on Sunday?",
+      "Sunday hours for delivery?",
+      "How late are you open for delivery on Sunday?",
+    ];
+
+    const incidentalCases = [
+      ["What time will you close on Sunday? I might get cappuccino.", "On sunday, Zuki's closes at 4 PM."],
+      ["What's your opening time on Sunday? I might get cappuccino.", "On sunday, Zuki's opens at 10 AM."],
+      ["What hours are you open on Sunday? I might get cappuccino.", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+    ];
+
+    const failures = [];
+    let claudeCalls = 0;
+
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder: async () => {
+            claudeCalls += 1;
+            return {
+              text: "Unexpected Claude call",
+              model: "fake-model",
+              stopReason: "end_turn",
+            };
+          },
+        },
+      );
+
+    for (const [query, expected] of knownCases) {
+      const knowledge =
+        lookupBusinessKnowledge(
+          normalizedData,
+          query,
+        );
+
+      const result =
+        await service.lookup(query);
+
+      if (
+        knowledge.status !== "known" ||
+        knowledge.answer !== expected ||
+        result.status !== "answered" ||
+        result.source !== "local" ||
+        result.topic !== "opening_hours" ||
+        result.text !== expected
+      ) {
+        failures.push({
+          kind: "known",
+          query,
+          expected,
+          knowledge,
+          result,
+        });
+      }
+    }
+
+    for (const [query, expected] of incidentalCases) {
+      const result =
+        await service.lookup(query);
+
+      if (
+        result.status !== "answered" ||
+        result.source !== "local" ||
+        result.topic !== "opening_hours" ||
+        result.text !== expected
+      ) {
+        failures.push({
+          kind: "incidental",
+          query,
+          expected,
+          result,
+        });
+      }
+    }
+
+    for (const query of scopedCases) {
+      const knowledge =
+        lookupBusinessKnowledge(
+          normalizedData,
+          query,
+        );
+
+      if (
+        knowledge.status !== "no_match" ||
+        knowledge.topic === "opening_hours"
+      ) {
+        failures.push({
+          kind: "scoped",
+          query,
+          knowledge,
+        });
+      }
+    }
+
+    assert.deepEqual(failures, []);
+    assert.equal(claudeCalls, 0);
+  },
+);
+
+test(
+  "STEP3 regression: ASR-degraded weekday hours normalize safely",
+  async () => {
+    const knownCases = [
+      ["what time you close sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["when you close sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["sunday what time you close", "On sunday, Zuki's closes at 4 PM."],
+      ["on sunday what time you close", "On sunday, Zuki's closes at 4 PM."],
+      ["what time zuki close sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["what time cafe close sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["how late you open sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["till when you open sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["till what time you open sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["until what time you open sunday", "On sunday, Zuki's closes at 4 PM."],
+
+      ["what time you open sunday", "On sunday, Zuki's opens at 10 AM."],
+      ["when you open sunday", "On sunday, Zuki's opens at 10 AM."],
+      ["sunday what time you open", "On sunday, Zuki's opens at 10 AM."],
+      ["on sunday what time you open", "On sunday, Zuki's opens at 10 AM."],
+      ["what time zuki open sunday", "On sunday, Zuki's opens at 10 AM."],
+      ["what time cafe open sunday", "On sunday, Zuki's opens at 10 AM."],
+
+      ["are you open sundays", "On sunday, Zuki's opens at 10 AM."],
+      ["what time do you open sundays", "On sunday, Zuki's opens at 10 AM."],
+      ["what time do you close sundays", "On sunday, Zuki's closes at 4 PM."],
+      ["what are your hours sundays", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+
+      ["sunday opening times", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["what are sunday opening times", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["what times are you open sunday", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["your sunday hours please", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+
+      ["yeah hi what time you close sunday please", "On sunday, Zuki's closes at 4 PM."],
+      ["um just wondering when you open sunday", "On sunday, Zuki's opens at 10 AM."],
+      ["okay so what time you close on sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["hello can you tell me your sunday hours", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+
+      ["what time what time do you close sunday", "On sunday, Zuki's closes at 4 PM."],
+      ["when when do you open sunday", "On sunday, Zuki's opens at 10 AM."],
+      ["sunday sunday what time do you close", "On sunday, Zuki's closes at 4 PM."],
+    ];
+
+    const mustNotBecomeHours = [
+      "open tab sunday",
+      "close my tab sunday",
+      "delivery open sunday",
+      "kitchen open sunday",
+      "happy hour sunday",
+      "opening an account sunday",
+      "close my account sunday",
+    ];
+
+    const relativeCases = [
+      "you open now",
+      "still open now",
+      "you open tonight",
+      "what time you close today",
+      "what time you open tomorrow",
+    ];
+
+    const failures = [];
+    let claudeCalls = 0;
+
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder: async () => {
+            claudeCalls += 1;
+
+            return {
+              text: "Unexpected Claude call",
+              model: "fake-model",
+              stopReason: "end_turn",
+            };
+          },
+        },
+      );
+
+    for (const [query, expected] of knownCases) {
+      const knowledge =
+        lookupBusinessKnowledge(
+          normalizedData,
+          query,
+        );
+
+      const result =
+        await service.lookup(query);
+
+      if (
+        knowledge.status !== "known" ||
+        knowledge.topic !== "opening_hours" ||
+        knowledge.answer !== expected ||
+        result.status !== "answered" ||
+        result.source !== "local" ||
+        result.topic !== "opening_hours" ||
+        result.text !== expected
+      ) {
+        failures.push({
+          kind: "known",
+          query,
+          expected,
+          knowledge,
+          result,
+        });
+      }
+    }
+
+    for (const query of mustNotBecomeHours) {
+      const knowledge =
+        lookupBusinessKnowledge(
+          normalizedData,
+          query,
+        );
+
+      if (
+        knowledge.status === "known" &&
+        knowledge.topic === "opening_hours"
+      ) {
+        failures.push({
+          kind: "false-positive",
+          query,
+          knowledge,
+        });
+      }
+    }
+
+    for (const query of relativeCases) {
+      const result =
+        await service.lookup(query);
+
+      if (
+        result.status === "answered" &&
+        result.topic === "opening_hours"
+      ) {
+        failures.push({
+          kind: "relative",
+          query,
+          result,
+        });
+      }
+    }
+
+    assert.deepEqual(failures, []);
+    assert.equal(claudeCalls, 0);
+  },
+);
+
 test(
   "STEP3 safety: relative opening hours transfer without a restaurant local clock",
   async (context) => {
