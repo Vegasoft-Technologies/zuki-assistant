@@ -291,7 +291,7 @@ test(
 
     const result =
       await service.lookup(
-        "What time do you close on Sunday?",
+        "What time are you closing on Sunday?",
       );
 
     assert.equal(
@@ -322,6 +322,74 @@ test(
       claudeCalls,
       0,
     );
+  },
+);
+
+test(
+  "STEP3 regression: natural Sunday hours phrasings resolve to the correct local fact",
+  async () => {
+    const cases = [
+      ["What time do you close on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["What time are you closing on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["When do you close Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["When are you closing Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["How late are you open on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["Until what time are you open on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["What time are you open until on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["What time are you open till on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["When do you shut on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+      ["What time are you shutting on Sunday?", "On sunday, Zuki's closes at 4 PM."],
+
+      ["What time do you open on Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["What time are you opening on Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["When do you open Sunday?", "On sunday, Zuki's opens at 10 AM."],
+      ["When are you opening Sunday?", "On sunday, Zuki's opens at 10 AM."],
+
+      ["What are your hours on Sunday?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["What are your Sunday hours?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["Sunday hours?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["What are the opening hours on Sunday?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+      ["When do you open and close on Sunday?", "On sunday, Zuki's is open from 10 AM to 4 PM."],
+    ];
+
+    let claudeCalls = 0;
+    const failures = [];
+
+    const service =
+      createKnowledgeSafeAssistantService(
+        normalizedData,
+        {
+          claudeResponder: async () => {
+            claudeCalls += 1;
+            return {
+              text: "Unexpected Claude call",
+              model: "fake-model",
+              stopReason: "end_turn",
+            };
+          },
+        },
+      );
+
+    for (const [query, expected] of cases) {
+      const result =
+        await service.lookup(query);
+
+      if (
+        result.status !== "answered" ||
+        result.source !== "local" ||
+        result.topic !== "opening_hours" ||
+        result.text !== expected
+      ) {
+        failures.push({
+          query,
+          expected,
+          result,
+        });
+      }
+    }
+
+    assert.deepEqual(failures, []);
+    assert.equal(claudeCalls, 0);
   },
 );
 
