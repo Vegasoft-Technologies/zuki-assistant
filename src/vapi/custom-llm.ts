@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { GENERIC_FALLBACK_REASONS, type KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
-import { CLARIFY_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "./phrases.js";
+import { CLARIFY_OFFER, CONFIRMATION, DELIBERATE_OFFER, LOOKUP_ERROR_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "./phrases.js";
 
 export type Action = { kind: "speak"; text: string } | { kind: "transfer"; destination: string } | { kind: "silent" };
 export type Message = { role: string; content?: string | { type: string; text?: string | undefined }[] | null | undefined };
@@ -77,7 +77,11 @@ function closingAction(normalized: string): Action | undefined {
   return hasGoodbye ? { kind: "speak", text: REPLIES.goodbye } : { kind: "silent" };
 }
 
-export type Offer = "reservation" | "clarify";
+export type Offer = "reservation" | "clarify" | "deliberate" | "error" | "confirmation-1" | "confirmation-2";
+type Decision = { action: Action; offer: Offer | null };
+const isConfirmation = (text: string) => new RegExp(`^(?:${alternatives(PHRASES.confirmation)})(?: (?:${alternatives(PHRASES.confirmation)}))*$`).test(text);
+const nextConfirmation = (offer: Offer): Offer | null =>
+  offer === "confirmation-2" ? null : offer === "confirmation-1" ? "confirmation-2" : "confirmation-1";
 // null = we answered without an offer; undefined = no record (e.g. first message, server restart).
 export interface CallOffers {
   at(userTurn: number): Offer | null | undefined;
@@ -127,13 +131,20 @@ export function createOfferMemory(ttlMs = 2 * 60 * 60 * 1000, now = () => Date.n
 function offerFromText(text: string): Offer | null {
   const normalized = normalizeForClassification(text);
   if (/\breservations?\b/.test(normalized)) return "reservation";
-  if (/\bnot sure\b|\bfrom our team\b|\btransfer you\b/.test(normalized)) return "clarify";
+  if (normalized === normalizeForClassification(CONFIRMATION)) return "confirmation-1";
+  if (normalized === normalizeForClassification(DELIBERATE_OFFER)) return "deliberate";
+  if (normalized === normalizeForClassification(LOOKUP_ERROR_OFFER)) return "error";
+  if (normalized === normalizeForClassification(CLARIFY_OFFER) ||
+      /\bnot sure\b|\bfrom our team\b|\btransfer you\b|\brephrase that\b|\bput you through to a team member\b/.test(normalized)) return "clarify";
   return null;
 }
 
 const offerOf = (action: Action): Offer | null =>
   action.kind === "speak" && action.text === RESERVATION_OFFER ? "reservation"
-    : action.kind === "speak" && action.text === CLARIFY_OFFER ? "clarify" : null;
+    : action.kind === "speak" && action.text === CLARIFY_OFFER ? "clarify"
+      : action.kind === "speak" && action.text === DELIBERATE_OFFER ? "deliberate"
+        : action.kind === "speak" && action.text === LOOKUP_ERROR_OFFER ? "error"
+          : action.kind === "speak" && action.text === CONFIRMATION ? "confirmation-1" : null;
 
 export async function routeConversation(
   messages: readonly Message[], tools: unknown, service: KnowledgeSafeAssistantService, fallback?: string,
@@ -141,21 +152,24 @@ export async function routeConversation(
 ): Promise<Action> {
   const userTurn = messages.filter((message) => message.role === "user").length;
   const recordOffer = messages.at(-1)?.role === "user" ? offers?.begin(userTurn) : undefined;
-  const action = await decide(messages, tools, service, fallback, offers);
-  recordOffer?.(offerOf(action));
-  return action;
+  const decision = await decide(messages, tools, service, fallback, offers);
+  recordOffer?.(decision.offer);
+  return decision.action;
 }
 
 async function decide(
   messages: readonly Message[], tools: unknown, service: KnowledgeSafeAssistantService, fallback?: string,
   offers?: CallOffers,
-): Promise<Action> {
+): Promise<Decision> {
   const last = messages.at(-1);
-  if (!last || last.role !== "user") return { kind: "silent" };
+  if (!last || last.role !== "user") return { action: { kind: "silent" }, offer: null };
   const turn = content(last);
   const normalized = normalizeForClassification(turn);
-  const speak = (text: string): Action => ({ kind: "speak", text });
-  const transfer = () => transferAction(tools, fallback);
+  const speak = (text: string): Decision => {
+    const action: Action = { kind: "speak", text };
+    return { action, offer: offerOf(action) };
+  };
+  const transfer = (): Decision => ({ action: transferAction(tools, fallback), offer: null });
   const pastOffers: (Offer | null)[] = [];
   let usersBefore = 0;
   for (const message of messages.slice(0, -1)) {
@@ -163,13 +177,29 @@ async function decide(
       usersBefore++;
       const recorded = offers?.at(usersBefore);
       if (recorded !== undefined) pastOffers.push(recorded);
+      else {
+        const pending = pastOffers.at(-1);
+        const reply = normalizeForClassification(content(message));
+        if (pending && PHRASES.yes.some((phrase) => phrase === reply)) pastOffers.push(null);
+        else if (pending && isConfirmation(reply)) pastOffers.push(nextConfirmation(pending));
+      }
     }
     if (message.role !== "assistant") continue;
     const recorded = offers?.at(usersBefore);
-    pastOffers.push(recorded === undefined ? offerFromText(content(message)) : recorded);
+    const inferred = recorded === undefined ? offerFromText(content(message)) : recorded;
+    // The preceding user turn already advanced a text-only confirmation counter.
+    if (recorded === undefined && inferred === "confirmation-1" &&
+        (pastOffers.at(-1) === "confirmation-1" || pastOffers.at(-1) === "confirmation-2")) continue;
+    pastOffers.push(inferred);
   }
-  if (pastOffers.at(-1)) {
-    if (new RegExp(`^(?:${alternatives(PHRASES.yes)})(?:[ ,]+(?:please|thanks))?$`).test(normalized)) return transfer();
+  let pending = pastOffers.at(-1) ?? null;
+  if (pending) {
+    if (PHRASES.yes.some((phrase) => phrase === normalized)) return transfer();
+    if (isConfirmation(normalized)) {
+      const next = nextConfirmation(pending);
+      if (next) return { action: { kind: "speak", text: CONFIRMATION }, offer: next };
+      pending = null;
+    }
     const asksQuestion = turn.includes("?") ||
       new RegExp(`\\b(?:${alternatives(PHRASES.questionWords)})\\b`).test(normalized);
     const startsDecline = PHRASES.declineStart.some((phrase) =>
@@ -177,25 +207,25 @@ async function decide(
     if (!asksQuestion && (startsDecline || PHRASES.no.some((phrase) => phrase === normalized))) {
       return speak(REPLIES.declined);
     }
-    if (startsDecline) pastOffers.push(null);
+    if (startsDecline) pending = null;
   }
   if (PHRASES.humanOnly.some((phrase) => phrase === normalized) ||
       new RegExp(`\\b(?:${alternatives(PHRASES.humanRequest)}) (?:a |an |the )?(?:${alternatives(PHRASES.human)})\\b`).test(normalized)) return transfer();
   if (new RegExp(`\\b(?:${alternatives(PHRASES.reservation)})\\b`).test(normalized)) return speak(RESERVATION_OFFER);
   if (new RegExp(`^(?:${alternatives(PHRASES.greeting)})(?: (?:${alternatives(PHRASES.greeting)}))?(?: (?:there|zuki))?(?: how are you)?$`).test(normalized)) return speak(REPLIES.greeting);
   const closer = closingAction(normalized);
-  if (closer) return closer;
+  if (closer) return { action: closer, offer: closer.kind === "silent" ? pending : null };
   if (PHRASES.filler.some((phrase) => phrase === normalized)) return speak(REPLIES.filler);
   let result: Awaited<ReturnType<KnowledgeSafeAssistantService["lookup"]>>;
   try {
     result = await service.lookup(turn);
-  } catch { return transfer(); /* Lookup failures transfer directly, without exposing errors. */ }
-  if ((result.status === "answered" || result.status === "clarification_required") && result.text?.trim()) return speak(toSpokenPrices(result.text));
-  // Consecutive generic fallbacks transfer after an offer; deliberate transfers stay direct.
+  } catch { return speak(LOOKUP_ERROR_OFFER); }
+  if (result.status === "answered" || result.status === "clarification_required") {
+    return result.text?.trim() ? speak(toSpokenPrices(result.text)) : speak(LOOKUP_ERROR_OFFER);
+  }
   const generic = result.status === "unavailable" ||
     (result.status === "transfer_required" && GENERIC_FALLBACK_REASONS.has(result.reason));
-  if (generic && pastOffers.at(-1) !== "clarify") return speak(CLARIFY_OFFER);
-  return transfer();
+  return speak(generic ? CLARIFY_OFFER : DELIBERATE_OFFER);
 }
 
 export function buildCompletion(action: Action) {

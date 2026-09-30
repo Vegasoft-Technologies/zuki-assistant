@@ -1,3 +1,4 @@
+import { FIRST_MESSAGE } from "./phrases.js";
 import type { KnowledgeSafeResult } from "../assistant/knowledge-safe-service.js";
 
 // Same sentence src/api/server.ts returns as `response` for transfer_required,
@@ -52,7 +53,7 @@ export function createAssistantConfig(baseUrl: string, transferNumber: string) {
   const url = createLookupTool(baseUrl).url.replace(/\/lookup$/, "/vapi");
   return {
     name: "Zuki - Sude test",
-    firstMessage: "Hello, you've reached Zuki's assistant. How can I help you?",
+    firstMessage: FIRST_MESSAGE,
     model: {
       provider: "custom-llm",
       url,
