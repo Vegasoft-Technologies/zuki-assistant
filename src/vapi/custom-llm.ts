@@ -159,7 +159,11 @@ async function decide(
   const pastOffers: (Offer | null)[] = [];
   let usersBefore = 0;
   for (const message of messages.slice(0, -1)) {
-    if (message.role === "user") usersBefore++;
+    if (message.role === "user") {
+      usersBefore++;
+      const recorded = offers?.at(usersBefore);
+      if (recorded !== undefined) pastOffers.push(recorded);
+    }
     if (message.role !== "assistant") continue;
     const recorded = offers?.at(usersBefore);
     pastOffers.push(recorded === undefined ? offerFromText(content(message)) : recorded);
@@ -173,6 +177,7 @@ async function decide(
     if (!asksQuestion && (startsDecline || PHRASES.no.some((phrase) => phrase === normalized))) {
       return speak(REPLIES.declined);
     }
+    if (startsDecline) pastOffers.push(null);
   }
   if (PHRASES.humanOnly.some((phrase) => phrase === normalized) ||
       new RegExp(`\\b(?:${alternatives(PHRASES.humanRequest)}) (?:a |an |the )?(?:${alternatives(PHRASES.human)})\\b`).test(normalized)) return transfer();
