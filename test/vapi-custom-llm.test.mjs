@@ -1089,6 +1089,140 @@ test("HTTP three-way speculative corrections cannot overwrite the final state", 
   );
 });
 
+test("HTTP completed user turns reset offers when assistant acknowledgements are omitted", async (t) => {
+  t.mock.method(console, "info", () => {});
+  let calls = 0;
+  const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()), {
+    claudeResponder: async () => { calls += 1; return { text: "A cappuccino is £3.55.", model: "test", stopReason: "end_turn" }; },
+  });
+  await withServer(service, async (url) => {
+    for (const stream of [false, true]) {
+      const id = `missing-ack-${stream}`;
+      const priceHistory = [user("How much is a cappuccino?")];
+      const price = await postConversation(url, priceHistory, id, stream);
+      assert.equal(price.message.content, "A cappuccino is 3 pounds 55.");
+      const history = [...priceHistory, { role: "assistant", content: "A cappuccino is three" }, user("Blah flurb?")];
+      const offer = await postConversation(url, history, id, stream);
+      assert.equal(offer.message.content, CLARIFY_OFFER);
+      const offered = [...history, offer.message];
+      const decline = [...offered, user("No thanks.")];
+      assert.equal((await postConversation(url, decline, id, stream)).message.content, REPLIES.declined);
+      assert.equal((await postConversation(url, decline, id, stream)).message.content, REPLIES.declined);
+      const next = [...decline, user("Okay, thanks. Do you know the Wi-Fi password by any chance?")];
+      const fresh = await postConversation(url, next, id, stream);
+      assert.equal(fresh.finish_reason, "stop");
+      assert.equal(fresh.message.tool_calls, undefined);
+      assert.equal(fresh.message.content, CLARIFY_OFFER);
+      assert.equal((await postConversation(url, next, id, stream)).message.content, CLARIFY_OFFER);
+      assert.equal((await postConversation(url, [...next, user("Blah flurb?")], id, stream)).finish_reason, "tool_calls");
+
+      const otherId = `other-${stream}`;
+      assert.equal((await postConversation(url, history, otherId, stream)).message.content, CLARIFY_OFFER);
+      assert.equal((await postConversation(url, [...offered, user("Blah flurb?")], otherId, stream)).finish_reason, "tool_calls");
+      assert.equal((await postConversation(url, [...offered, user("Yes please")], otherId, stream)).finish_reason, "tool_calls");
+      assert.equal((await postConversation(url, [user("Blah flurb?")], `new-${stream}`, stream)).message.content, CLARIFY_OFFER);
+
+      const answerHistory = [...offered, user("What time do you close on Sunday?")];
+      assert.equal((await postConversation(url, answerHistory, id, stream)).message.content, "On sunday, Zuki's closes at 4 PM.");
+      assert.equal((await postConversation(url, [...answerHistory, user("What is the wifi password?")], id, stream)).message.content, CLARIFY_OFFER);
+    }
+  });
+  assert.equal(calls, 2);
+});
+
+test("HTTP rewritten offers stay cancelled across repeated declines and delayed acknowledgements", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const service = { lookup: async () => ({ status: "unavailable" }) };
+  await withServer(service, async (url) => {
+    for (const [index, initial, reply, expectedOffer] of [
+      [0, "unknown", "Nah.", CLARIFY_OFFER],
+      [1, "Can I book a table?", "No thank you.", RESERVATION_OFFER],
+    ]) {
+      const id = `rewritten-decline-${index}`;
+      const start = [user(initial)];
+      assert.equal((await postConversation(url, start, id)).message.content, expectedOffer);
+      const decline = [...start, { role: "assistant", content: "garbled speech" }, user(reply)];
+      assert.equal((await postConversation(url, decline, id)).message.content, REPLIES.declined);
+      const repeated = [...decline, user("No thanks.")];
+      const response = await postConversation(url, repeated, id);
+      assert.equal(response.finish_reason, "stop");
+      assert.equal(response.message.tool_calls, undefined);
+      for (const acknowledgement of [[], [{ role: "assistant", content: CLARIFY_OFFER }]]) {
+        const next = await postConversation(url, [...repeated, ...acknowledgement, user("Okay, thanks. Do you know the Wi-Fi password by any chance?")], id);
+        assert.equal(next.finish_reason, "stop");
+        assert.equal(next.message.tool_calls, undefined);
+        assert.equal(next.message.content, CLARIFY_OFFER);
+      }
+    }
+  });
+});
+
+test("HTTP declines with new questions cancel old offers without swallowing the question", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const seen = [];
+  const service = { lookup: async (query) => {
+    seen.push(query);
+    if (query.includes("cappuccino")) return { status: "answered", text: "A cappuccino is £3.55." };
+    if (query.includes("sushi")) return { status: "transfer_required", reason: "The request cannot be verified from current menu information." };
+    return { status: "unavailable" };
+  } };
+  await withServer(service, async (url) => {
+    for (const [index, query] of [
+      "No thanks, but do you know the Wi-Fi password?",
+      "No, what is the Wi-Fi password?",
+      "No thanks, but how much is a cappuccino?",
+      "Do you know whether the Wi-Fi password is yes or no?",
+      "Yes, but how much is a cappuccino?",
+      "No thanks, but will you have sushi?",
+    ].entries()) {
+      const id = `compound-${index}`;
+      const start = [user("unknown")];
+      const offer = await postConversation(url, start, id);
+      const result = await postConversation(url, [...start, offer.message, user(query)], id);
+      assert.equal(seen.at(-1), query);
+      if (query.includes("cappuccino")) assert.equal(result.message.content, "A cappuccino is 3 pounds 55.");
+      else if (query.startsWith("No") && !query.includes("sushi")) {
+        assert.equal(result.finish_reason, "stop");
+        assert.equal(result.message.tool_calls, undefined);
+        assert.equal(result.message.content, CLARIFY_OFFER);
+      } else assert.equal(result.finish_reason, "tool_calls");
+    }
+  });
+});
+
+test("HTTP stale requests cannot restore offers after an omitted decline acknowledgement", async (t) => {
+  t.mock.method(console, "info", () => {});
+  for (const sameTurn of [false, true]) {
+    let release;
+    let entered;
+    const pending = new Promise((resolve) => { release = resolve; });
+    const started = new Promise((resolve) => { entered = resolve; });
+    const service = { lookup: async (query) => {
+      if (query === "partial") { entered(); return pending; }
+      return { status: "unavailable" };
+    } };
+    await withServer(service, async (url) => {
+      const id = `stale-decline-${sameTurn}`;
+      const start = [user("unknown")];
+      const offer = await postConversation(url, start, id);
+      const offered = [...start, offer.message];
+      const stale = postConversation(url, sameTurn ? [...offered, user("partial")] : [user("partial")], id);
+      await started;
+      const decline = [...offered, user("No thanks.")];
+      try {
+        assert.equal((await postConversation(url, decline, id)).message.content, REPLIES.declined);
+      } finally {
+        release({ status: "clarification_required", text: CLARIFY_OFFER });
+        await stale;
+      }
+      const result = await postConversation(url, [...decline, user("Okay, thanks. Do you know the Wi-Fi password by any chance?")], id);
+      assert.equal(result.finish_reason, "stop");
+      assert.equal(result.message.tool_calls, undefined);
+      assert.equal(result.message.content, CLARIFY_OFFER);
+    });
+  }
+});
+
 test("SSE and JSON builders cover speak, silent and transfer completions", () => {
   for (const action of [speak("Hello!"), { kind: "silent" }, transfer]) {
     const parts = chunks(buildSse(action));
@@ -1115,6 +1249,24 @@ async function withServer(service, run) {
   const server = await new Promise((resolve) => { const s = createApiServer(service).listen(0, "127.0.0.1", () => resolve(s)); });
   try { await run(`http://127.0.0.1:${server.address().port}/api/vapi/chat/completions`); }
   finally { await new Promise((resolve) => server.close(resolve)); }
+}
+
+async function postConversation(url, messages, callId, stream = false) {
+  const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, tools, stream, call: { id: callId } }) });
+  assert.equal(response.status, 200);
+  let choice;
+  if (stream) {
+    const parts = chunks(await response.text());
+    choice = { message: parts[0].choices[0].delta, finish_reason: parts.at(-1).choices[0].finish_reason };
+    if (choice.finish_reason === "tool_calls") assertTransfer(parts);
+  } else choice = (await response.json()).choices[0];
+  assert.equal(choice.message.role, "assistant");
+  if (choice.finish_reason === "tool_calls") {
+    assert.equal(choice.message.content, undefined);
+    assert.equal(choice.message.tool_calls[0].function.name, "transferCall");
+    assert.deepEqual(JSON.parse(choice.message.tool_calls[0].function.arguments), { destination });
+  }
+  return choice;
 }
 
 test("HTTP custom LLM preserves combined query, streams transfers and speaks prices/clarification", async () => {
