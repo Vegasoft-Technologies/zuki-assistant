@@ -1,3 +1,4 @@
+import { FIRST_MESSAGE } from "../dist/vapi/phrases.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { provision } from "../dist/vapi/provision.js";
@@ -126,7 +127,7 @@ test("custom LLM config preserves transfer, transcription and voice settings", (
   assert.equal(config.transcriber.model, "gpt-4o-transcribe");
   assert.equal(config.transcriber.fallbackPlan.transcribers[0].model, "nova-3");
   assert.equal(config.voice.voiceId, "Elliot");
-  assert.equal(config.firstMessage, "Hello, you've reached Zuki's assistant. How can I help you?");
+  assert.equal(config.firstMessage, FIRST_MESSAGE);
   assert.deepEqual(config.voice.chunkPlan.formatPlan.replacements.slice(0, 2), [
     { type: "exact", key: "Zuki's", value: "Zookee's" },
     { type: "exact", key: "Zuki", value: "Zookee" },
@@ -161,4 +162,12 @@ test("legacy /api/lookup contract remains unchanged", async () => {
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+});
+
+test("assistant config enables post-call summary and success evaluation", () => {
+  const config = createAssistantConfig(env.ZUKI_API_BASE_URL, env.ZUKI_TEST_TRANSFER_NUMBER);
+  assert.deepEqual(config.analysisPlan, {
+    summaryPlan: { enabled: true },
+    successEvaluationPlan: { enabled: true },
+  });
 });

@@ -1,3 +1,4 @@
+import { FIRST_MESSAGE } from "./phrases.js";
 import type { KnowledgeSafeResult } from "../assistant/knowledge-safe-service.js";
 
 // Same sentence src/api/server.ts returns as `response` for transfer_required,
@@ -52,7 +53,7 @@ export function createAssistantConfig(baseUrl: string, transferNumber: string) {
   const url = createLookupTool(baseUrl).url.replace(/\/lookup$/, "/vapi");
   return {
     name: "Zuki - Sude test",
-    firstMessage: "Hello, you've reached Zuki's assistant. How can I help you?",
+    firstMessage: FIRST_MESSAGE,
     model: {
       provider: "custom-llm",
       url,
@@ -97,6 +98,12 @@ export function createAssistantConfig(baseUrl: string, transferNumber: string) {
         { type: "regex", regex: "£(\\d+)\\.(\\d{2})", value: "$1 pounds $2" },
         { type: "regex", regex: "£(\\d+)", value: "$1 pounds" },
       ] } },
+    },
+    // Post-call summary and success evaluation for test/error tracking (team decision 2026-10-01).
+    // Managed here, not in the dashboard, so the live assistant matches this script.
+    analysisPlan: {
+      summaryPlan: { enabled: true },
+      successEvaluationPlan: { enabled: true },
     },
   };
 }

@@ -161,6 +161,8 @@ function normalizeOpeningHoursQuery(
       )
       .trim();
 
+  query = query.replace(/^(?:no thank you|no thanks|go ahead|yes|yeah|yep|okay|ok|sure|no)\s+(?:(?:but|and|so)\s+)?/u, "");
+
   // Remove harmless telephone fillers only from the beginning.
   query = query
     .replace(
@@ -372,46 +374,53 @@ interface OpeningHoursMatch {
   matchedText: string;
 }
 
+function matchOpeningHoursClause(
+  query: string,
+  allowShortForm = false,
+): OpeningHoursMatch | undefined {
+  const leadingDay = query.match(/^(?:on )?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+/u)?.[0] ?? "";
+  for (const prefix of leadingDay ? ["", leadingDay] : [""]) {
+    const clause = query.slice(prefix.length);
+    for (const rule of OPENING_HOURS_RULES) {
+      const match = rule.pattern.exec(clause);
+      if (match === null) continue;
+      let matchedText = prefix + match[0];
+      const trailingDay = query.slice(matchedText.length)
+        .match(/^\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u);
+      if (trailingDay !== null) matchedText += trailingDay[0];
+      return { query, intent: rule.intent, matchedText };
+    }
+    if (allowShortForm) {
+      const short = clause.match(/^(open|opening|close|closing|shut|shutting)(?=$|\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b|\s+(?:please|i|we|and)\b)/u);
+      if (short) {
+        let matchedText = prefix + short[0];
+        const trailingDay = query.slice(matchedText.length)
+          .match(/^\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u);
+        if (trailingDay !== null) matchedText += trailingDay[0];
+        return { query, intent: short[1]!.startsWith("open") ? "open" : "close", matchedText };
+      }
+    }
+  }
+  return undefined;
+}
+
 function matchOpeningHoursIntent(
   rawQuery: string,
 ): OpeningHoursMatch | undefined {
-  const query =
-    normalizeOpeningHoursQuery(rawQuery);
-
-  if (
-    isScopedNonBusinessHoursQuery(query)
-  ) {
-    return undefined;
-  }
-
-  for (const rule of OPENING_HOURS_RULES) {
-    const match =
-      rule.pattern.exec(query);
-
-    if (match !== null) {
-      let matchedText =
-        match[0];
-
-      const trailingDay =
-        query
-          .slice(matchedText.length)
-          .match(
-            /^\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/u,
-          );
-
-      if (trailingDay !== null) {
-        matchedText += trailingDay[0];
-      }
-
-      return {
-        query,
-        intent: rule.intent,
-        matchedText,
-      };
-    }
-  }
-
-  return undefined;
+  const query = normalizeOpeningHoursQuery(rawQuery);
+  if (isScopedNonBusinessHoursQuery(query)) return undefined;
+  const first = matchOpeningHoursClause(query);
+  if (!first) return undefined;
+  const conjunction = query.slice(first.matchedText.length).match(/^\s+and\s+/u);
+  if (!conjunction) return first;
+  const secondQuery = normalizeOpeningHoursQuery(query.slice(first.matchedText.length + conjunction[0].length));
+  const second = matchOpeningHoursClause(secondQuery, true);
+  if (!second || first.intent === second.intent) return first;
+  return {
+    query: first.matchedText + conjunction[0] + second.query,
+    intent: "range",
+    matchedText: first.matchedText + conjunction[0] + second.matchedText,
+  };
 }
 
 export function classifyOpeningHoursIntent(

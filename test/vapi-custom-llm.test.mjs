@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createOfferMemory, routeConversation, toSpokenPrices, buildSse, buildCompletion, transferToolShape } from "../dist/vapi/custom-llm.js";
-import { CLARIFY_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "../dist/vapi/phrases.js";
+import { CLARIFY_OFFER, CONFIRMATION, DELIBERATE_OFFER, LOOKUP_ERROR_OFFER, PHRASES, REPLIES, RESERVATION_OFFER, TRANSFER_FAILURE } from "../dist/vapi/phrases.js";
 import { createApiServer } from "../dist/api/server.js";
 import { createKnowledgeSafeAssistantService } from "../dist/assistant/knowledge-safe-service.js";
 import { loadZukiData } from "../dist/data/loader.js";
@@ -52,10 +52,16 @@ test("routing handles fixed phrases and reservation follow-ups without lookup", 
     assert.deepEqual(await routeConversation([user(input)], tools, noLookup), speak(output));
   }
   const offer = { role: "assistant", content: RESERVATION_OFFER };
-  for (const yes of PHRASES.yes) {
-    for (const suffix of ["", " please", " thanks"]) assert.deepEqual(await routeConversation([offer, user(yes + suffix)], tools, noLookup), transfer);
+  for (const yes of ["yes", "yeah", "yep", "sure", "please", "yes please", "ok", "okay", "go ahead"]) {
+    for (const suffix of ["", " please", " thanks"]) {
+      const reply = yes + suffix;
+      const offers = createOfferMemory().forCall(reply);
+      const exactYes = ["yes", "yes please", "yeah", "yep"].includes(reply);
+      assert.deepEqual(await routeConversation([offer, user(reply)], tools, noLookup, undefined, offers), exactYes ? transfer : speak(CONFIRMATION));
+      assert.equal(offers.at(1), exactYes ? null : "confirmation-1");
+    }
   }
-  for (const no of PHRASES.no) assert.deepEqual(await routeConversation([offer, user(no)], tools, noLookup), speak("No problem."));
+  for (const no of PHRASES.no) assert.deepEqual(await routeConversation([offer, user(no)], tools, noLookup), speak(REPLIES.declined));
   for (const role of ["tool", "assistant", "system"]) assert.deepEqual(await routeConversation([{ role, content: "yes" }], tools, noLookup), { kind: "silent" });
   assert.deepEqual(await routeConversation([], tools, noLookup), { kind: "silent" });
   for (const person of PHRASES.human) {
@@ -143,10 +149,19 @@ test("lookup receives whole original turns exactly once, including text parts an
 test("lookup status, failures and destination fallback determine actions", async () => {
   for (const result of [{ status: "transfer_required" }, { status: "transfer_required", reason: "The request cannot be verified from current menu information." }, { status: "answered", text: " " }, { status: "clarification_required", text: "" }, null]) {
     const service = { lookup: async () => { if (result === null) throw Error("private"); return result; } };
-    assert.deepEqual(await routeConversation([user("sushi?")], tools, service, "+12025550101"), transfer);
-    assertTransfer(chunks(buildSse(await routeConversation([user("sushi?")], tools, service))));
-    assert.deepEqual(await routeConversation([user("sushi?")], [], service, destination), transfer);
-    assert.deepEqual(await routeConversation([user("sushi?")], [], service), speak(TRANSFER_FAILURE));
+    const text = result?.status === "transfer_required" ? DELIBERATE_OFFER : LOOKUP_ERROR_OFFER;
+    const offers = createOfferMemory().forCall("lookup-result");
+    assert.deepEqual(await routeConversation([user("sushi?")], tools, service, "+12025550101", offers), speak(text));
+    assert.equal(offers.at(1), result?.status === "transfer_required" ? "deliberate" : "error");
+    const parts = chunks(buildSse(await routeConversation([user("sushi?")], tools, service)));
+    assert.equal(parts[0].choices[0].delta.content, text);
+    assert.equal(parts.at(-1).choices[0].finish_reason, "stop");
+    assert.deepEqual(await routeConversation([user("sushi?")], [], service, destination), speak(text));
+    assert.deepEqual(await routeConversation([user("sushi?")], [], service), speak(text));
+    const accepted = [user("sushi?"), { role: "assistant", content: text }, user("yes")];
+    assertTransfer(chunks(buildSse(await routeConversation(accepted, tools, noLookup, undefined, offers))));
+    assert.deepEqual(await routeConversation(accepted, [], noLookup, destination), transfer);
+    assert.deepEqual(await routeConversation(accepted, [], noLookup), speak(TRANSFER_FAILURE));
   }
   for (const values of [[], [destination, "+12025550101"], ["bad"]]) {
     const ambiguous = structuredClone(tools);
@@ -178,20 +193,26 @@ test("phone knowledge transcripts route to normal answers with spoken prices", a
   }
 });
 
-test("generic fallbacks offer transfer again after an answer; consecutive fallbacks transfer directly", async () => {
+test("generic fallbacks always reoffer; deliberate results offer and explicit human requests transfer", async () => {
   const service = createKnowledgeSafeAssistantService(transformZukiData(await loadZukiData()));
   for (const turn of ["What is the wifi password?", "Blah flurb cappucheeno?"]) {
     assert.deepEqual(await routeConversation([user(turn)], tools, service), speak(CLARIFY_OFFER), turn);
   }
   for (const turn of ["Where are you and do you have sushi?", "Is the cappuccino available today?", "Can I speak to a human?"]) {
-    assert.deepEqual(await routeConversation([user(turn)], tools, service), transfer, turn);
+    const offers = createOfferMemory().forCall(turn);
+    const human = turn === "Can I speak to a human?";
+    assert.deepEqual(await routeConversation([user(turn)], tools, service, undefined, offers), human ? transfer : speak(DELIBERATE_OFFER), turn);
+    assert.equal(offers.at(1), human ? null : "deliberate");
   }
   const unavailable = { lookup: async () => ({ status: "unavailable", reason: "claude_response_ungrounded", text: "private" }) };
   assert.deepEqual(await routeConversation([user("How much is it?")], tools, unavailable), speak(CLARIFY_OFFER));
 
   const offer = { role: "assistant", content: CLARIFY_OFFER };
   for (const yes of ["yes", "yes please", "okay", "sure thanks"]) {
-    assert.deepEqual(await routeConversation([user("wifi?"), offer, user(yes)], tools, noLookup), transfer, yes);
+    const offers = createOfferMemory().forCall(yes);
+    const exactYes = ["yes", "yes please", "yeah", "yep"].includes(yes);
+    assert.deepEqual(await routeConversation([user("wifi?"), offer, user(yes)], tools, noLookup, undefined, offers), exactYes ? transfer : speak(CONFIRMATION), yes);
+    assert.equal(offers.at(2), exactYes ? null : "confirmation-1");
   }
   for (const no of ["no", "no thanks", "Nah."]) {
     assert.deepEqual(await routeConversation([user("wifi?"), offer, user(no)], tools, noLookup), speak(REPLIES.declined), no);
@@ -199,10 +220,12 @@ test("generic fallbacks offer transfer again after an answer; consecutive fallba
   const answered = { lookup: async () => ({ status: "answered", text: "A cappuccino is £3.55." }) };
   assert.deepEqual(await routeConversation([user("How much is a capuchino?"), offer, user("How much is a cappuccino?")], tools, answered), speak("A cappuccino is 3 pounds 55."));
 
-  // An answered question allows a new offer; an immediate generic fallback still transfers.
+  // An answered question allows a new offer; another generic fallback also offers.
   const history = [user("wifi?"), offer, user("How much is a cappuccino?"), { role: "assistant", content: "A cappuccino is 3 pounds 55." }];
   assert.deepEqual(await routeConversation([...history, user("What is the wifi password?")], tools, service), speak(CLARIFY_OFFER));
-  assert.deepEqual(await routeConversation([user("wifi?"), { role: "assistant", content: `Hmm. ${CLARIFY_OFFER}` }, user("Blah flurb?")], tools, service), transfer);
+  const repeatedOffers = createOfferMemory().forCall("repeat-fallback");
+  assert.deepEqual(await routeConversation([user("wifi?"), { role: "assistant", content: `Hmm. ${CLARIFY_OFFER}` }, user("Blah flurb?")], tools, service, undefined, repeatedOffers), speak(CLARIFY_OFFER));
+  assert.equal(repeatedOffers.at(2), "clarify");
 });
 
 test("offers are remembered per call even when Vapi rewrites spoken assistant turns", async () => {
@@ -220,12 +243,14 @@ test("offers are remembered per call even when Vapi rewrites spoken assistant tu
     assert.deepEqual(await routeConversation([...start, heardOffer, user(reply)], tools, service, undefined, offers), expected, reply);
   }
 
-  // Memory preserves the immediate transfer and allows a new offer after an answer.
+  // Memory records renewed offers and clears the state after an answer.
   const offers = memory.forCall("call-second");
   await routeConversation(start, tools, service, undefined, offers);
-  assert.deepEqual(await routeConversation([...start, heardOffer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), transfer);
+  assert.deepEqual(await routeConversation([...start, heardOffer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), speak(CLARIFY_OFFER));
+  assert.equal(offers.at(2), "clarify");
   const afterAnswer = [...start, heardOffer, user("What time do you open on Sunday?")];
   assert.equal((await routeConversation(afterAnswer, tools, service, undefined, offers)).kind, "speak");
+  assert.equal(offers.at(2), null);
   const heardAnswer = { role: "assistant", content: "On Sunday, the cookies opens at 10 AM." };
   assert.deepEqual(await routeConversation([...afterAnswer, heardAnswer, user("Do you have pineapple pizza?")], tools, service, undefined, offers), speak(CLARIFY_OFFER));
 
@@ -272,7 +297,7 @@ test("HTTP custom LLM keeps the transfer offer across requests of the same call"
 test("HTTP concurrent corrections preserve the latest request's offer state", async () => {
   for (const [older, newer, expected] of [
     [{ status: "unavailable" }, { status: "answered", text: "A cappuccino is £3.55." }, CLARIFY_OFFER],
-    [{ status: "answered", text: "A cappuccino is £3.55." }, { status: "unavailable" }, undefined],
+    [{ status: "answered", text: "A cappuccino is £3.55." }, { status: "unavailable" }, CLARIFY_OFFER],
   ]) {
     let release;
     let started;
@@ -293,13 +318,16 @@ test("HTTP concurrent corrections preserve the latest request's offer state", as
       const corrected = await post([user("corrected")]);
       release(older);
       await stale;
+      const consent = await post([user("corrected"), corrected.message, user("yes")]);
+      assert.equal(consent.finish_reason, newer.status === "unavailable" ? "tool_calls" : "stop");
       const result = await post([user("corrected"), corrected.message, user("unknown")]);
       assert.equal(result.message.content, expected);
-      assert.equal(result.finish_reason, expected === undefined ? "tool_calls" : "stop");
-      if (expected === undefined) {
-        assert.equal(result.message.tool_calls[0].function.name, "transferCall");
-        assert.deepEqual(JSON.parse(result.message.tool_calls[0].function.arguments), { destination });
-      }
+      assert.equal(result.finish_reason, "stop");
+      assert.equal(result.message.tool_calls, undefined);
+      if (newer.status === "unavailable") {
+        assert.equal(consent.message.tool_calls[0].function.name, "transferCall");
+        assert.deepEqual(JSON.parse(consent.message.tool_calls[0].function.arguments), { destination });
+      } else assert.equal(consent.message.content, CLARIFY_OFFER);
     });
   }
 });
@@ -463,7 +491,7 @@ test("multi-turn offer lifecycle uses only the latest offer state", async () => 
     speak(CLARIFY_OFFER),
   );
 
-  // But an immediate second unresolved turn after that offer escalates.
+  // An immediate second unresolved turn renews the offer without escalating.
   history = [
     ...history,
     {
@@ -481,8 +509,11 @@ test("multi-turn offer lifecycle uses only the latest offer state", async () => 
       undefined,
       offers,
     ),
-    transfer,
+    speak(CLARIFY_OFFER),
   );
+  assert.equal(offers.at(history.filter((message) => message.role === "user").length), "clarify");
+  assert.equal(offers.at(2), null);
+  assert.equal(offers.at(4), null);
 });
 
 test("HTTP duplicate retries are idempotent and call offer memory is isolated", async () => {
@@ -882,6 +913,11 @@ test("HTTP realistic call transcript resets clarification after a real answer", 
         "On sunday, Zuki's closes at 4 PM.",
       );
 
+      const afterAnswerYes = await post([...history, user("yes please")]);
+      assert.equal(afterAnswerYes.finish_reason, "stop");
+      assert.equal(afterAnswerYes.message.tool_calls, undefined);
+      assert.equal(afterAnswerYes.message.content, CLARIFY_OFFER);
+
       // The answered hours turn must clear the
       // previous clarification chain.
       history = [
@@ -904,8 +940,7 @@ test("HTTP realistic call transcript resets clarification after a real answer", 
         CLARIFY_OFFER,
       );
 
-      // Only the immediately consecutive
-      // unresolved turn may escalate.
+      // Consecutive unresolved turns renew the offer.
       history = [
         ...history,
         {
@@ -923,14 +958,19 @@ test("HTTP realistic call transcript resets clarification after a real answer", 
 
       assert.equal(
         escalation.finish_reason,
-        "tool_calls",
+        "stop",
       );
 
       assert.equal(
-        escalation.message.tool_calls[0]
-          .function.name,
-        "transferCall",
+        escalation.message.content,
+        CLARIFY_OFFER,
       );
+
+      assert.equal(escalation.message.tool_calls, undefined);
+      const consent = await post([...history, user("yes")]);
+      assert.equal(consent.finish_reason, "tool_calls");
+      assert.equal(consent.message.tool_calls[0].function.name, "transferCall");
+      assert.deepEqual(JSON.parse(consent.message.tool_calls[0].function.arguments), { destination });
 
       // Only the actual menu-price turn needed Claude.
       assert.equal(
@@ -1108,17 +1148,27 @@ test("HTTP completed user turns reset offers when assistant acknowledgements are
       const decline = [...offered, user("No thanks.")];
       assert.equal((await postConversation(url, decline, id, stream)).message.content, REPLIES.declined);
       assert.equal((await postConversation(url, decline, id, stream)).message.content, REPLIES.declined);
+      const afterDeclineYes = await postConversation(url, [...decline, user("Yes please")], id, stream);
+      assert.equal(afterDeclineYes.finish_reason, "stop");
+      assert.equal(afterDeclineYes.message.tool_calls, undefined);
+      assert.equal(afterDeclineYes.message.content, CLARIFY_OFFER);
       const next = [...decline, user("Okay, thanks. Do you know the Wi-Fi password by any chance?")];
       const fresh = await postConversation(url, next, id, stream);
       assert.equal(fresh.finish_reason, "stop");
       assert.equal(fresh.message.tool_calls, undefined);
       assert.equal(fresh.message.content, CLARIFY_OFFER);
       assert.equal((await postConversation(url, next, id, stream)).message.content, CLARIFY_OFFER);
-      assert.equal((await postConversation(url, [...next, user("Blah flurb?")], id, stream)).finish_reason, "tool_calls");
+      const repeatedUnknown = await postConversation(url, [...next, user("Blah flurb?")], id, stream);
+      assert.equal(repeatedUnknown.finish_reason, "stop");
+      assert.equal(repeatedUnknown.message.content, CLARIFY_OFFER);
+      assert.equal((await postConversation(url, [...next, user("Blah flurb?"), user("Yes please")], id, stream)).finish_reason, "tool_calls");
 
       const otherId = `other-${stream}`;
       assert.equal((await postConversation(url, history, otherId, stream)).message.content, CLARIFY_OFFER);
-      assert.equal((await postConversation(url, [...offered, user("Blah flurb?")], otherId, stream)).finish_reason, "tool_calls");
+      const otherUnknown = await postConversation(url, [...offered, user("Blah flurb?")], otherId, stream);
+      assert.equal(otherUnknown.finish_reason, "stop");
+      assert.equal(otherUnknown.message.content, CLARIFY_OFFER);
+      assert.equal((await postConversation(url, [...offered, user("Blah flurb?"), user("Yes please")], otherId, stream)).finish_reason, "tool_calls");
       assert.equal((await postConversation(url, [...offered, user("Yes please")], otherId, stream)).finish_reason, "tool_calls");
       assert.equal((await postConversation(url, [user("Blah flurb?")], `new-${stream}`, stream)).message.content, CLARIFY_OFFER);
 
@@ -1185,7 +1235,15 @@ test("HTTP declines with new questions cancel old offers without swallowing the 
         assert.equal(result.finish_reason, "stop");
         assert.equal(result.message.tool_calls, undefined);
         assert.equal(result.message.content, CLARIFY_OFFER);
-      } else assert.equal(result.finish_reason, "tool_calls");
+      } else {
+        assert.equal(result.finish_reason, "stop");
+        assert.equal(result.message.tool_calls, undefined);
+        assert.equal(result.message.content, query.includes("sushi") ? DELIBERATE_OFFER : CLARIFY_OFFER);
+        const offers = createOfferMemory().forCall(query);
+        offers.record(1, "clarify");
+        await routeConversation([...start, offer.message, user(query)], tools, service, undefined, offers);
+        assert.equal(offers.at(2), query.includes("sushi") ? "deliberate" : "clarify");
+      }
     }
   });
 });
@@ -1282,7 +1340,11 @@ test("HTTP custom LLM preserves combined query, streams transfers and speaks pri
     const response = await post({ messages: [user(combined)], tools, stream: true, call: { id: "extra" }, metadata: {}, temperature: 0 });
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /^text\/event-stream/);
-    assertTransfer(chunks(await response.text()));
+    const offered = chunks(await response.text());
+    assert.equal(offered[0].choices[0].delta.content, DELIBERATE_OFFER);
+    assert.equal(offered.at(-1).choices[0].finish_reason, "stop");
+    const consent = await post({ messages: [user(combined), user("yes")], tools, stream: true, call: { id: "extra" } });
+    assertTransfer(chunks(await consent.text()));
     assert.deepEqual(seen, [combined]);
     for (const stream of [true, false]) {
       for (const [turn, expected] of [["How much is a cappuccino?", "3.55? No, 3 pounds 55."], ["coffee?", "Which size?"]]) {
@@ -1310,12 +1372,22 @@ test("HTTP lookup exceptions still return SSE or JSON with env fallback or failu
           assert.equal(response.status, 200);
           if (stream) {
             const parts = chunks(await response.text());
-            if (fallback) assertTransfer(parts);
-            else assert.equal(parts[0].choices[0].delta.content, TRANSFER_FAILURE);
+            assert.equal(parts[0].choices[0].delta.content, LOOKUP_ERROR_OFFER);
+            assert.equal(parts.at(-1).choices[0].finish_reason, "stop");
+            const accepted = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [user("sushi?"), { role: "assistant", content: LOOKUP_ERROR_OFFER }, user("yes")], stream }) });
+            const acceptedParts = chunks(await accepted.text());
+            if (fallback) assertTransfer(acceptedParts);
+            else assert.equal(acceptedParts[0].choices[0].delta.content, TRANSFER_FAILURE);
           } else {
             const completion = await response.json();
             assert.equal(completion.object, "chat.completion");
-            assert.equal(completion.choices[0].finish_reason, fallback ? "tool_calls" : "stop");
+            assert.equal(completion.choices[0].finish_reason, "stop");
+            assert.equal(completion.choices[0].message.content, LOOKUP_ERROR_OFFER);
+            const accepted = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [user("sushi?"), { role: "assistant", content: LOOKUP_ERROR_OFFER }, user("yes")], stream }) });
+            const acceptedChoice = (await accepted.json()).choices[0];
+            assert.equal(acceptedChoice.finish_reason, fallback ? "tool_calls" : "stop");
+            if (fallback) assert.deepEqual(JSON.parse(acceptedChoice.message.tool_calls[0].function.arguments), { destination });
+            else assert.equal(acceptedChoice.message.content, TRANSFER_FAILURE);
           }
         }
       }
