@@ -163,3 +163,11 @@ test("legacy /api/lookup contract remains unchanged", async () => {
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test("assistant config enables post-call summary and success evaluation", () => {
+  const config = createAssistantConfig(env.ZUKI_API_BASE_URL, env.ZUKI_TEST_TRANSFER_NUMBER);
+  assert.deepEqual(config.analysisPlan, {
+    summaryPlan: { enabled: true },
+    successEvaluationPlan: { enabled: true },
+  });
+});
