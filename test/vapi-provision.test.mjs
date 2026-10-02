@@ -60,6 +60,7 @@ test("rerun with saved IDs PATCHes existing resources and updates the backend UR
   ]);
   assert.equal(calls[0].body.url, "https://deployed.example.com/base/api/lookup");
   assert.equal(calls[1].body.model.url, "https://deployed.example.com/base/api/vapi");
+  assert.deepEqual(calls[1].body.artifactPlan, { recordingEnabled: false });
 });
 
 test("dry run needs no credentials or number and makes no network calls", async () => {
@@ -170,4 +171,12 @@ test("assistant config enables post-call summary and success evaluation", () => 
     summaryPlan: { enabled: true },
     successEvaluationPlan: { enabled: true },
   });
+});
+
+test("assistant config disables recording and greets as an automated assistant", () => {
+  const config = createAssistantConfig(env.ZUKI_API_BASE_URL, env.ZUKI_TEST_TRANSFER_NUMBER);
+  assert.deepEqual(config.artifactPlan, { recordingEnabled: false });
+  assert.equal(FIRST_MESSAGE, "Hi, thanks for calling Zuki's. I'm the café's automated assistant. How can I help you today?");
+  assert.match(FIRST_MESSAGE, /automated assistant/);
+  assert.doesNotMatch(FIRST_MESSAGE, /record/i);
 });

@@ -1,6 +1,6 @@
 export const RESERVATION_OFFER = "I'm sorry, I can't make reservations. Would you like me to transfer you to someone who can help?";
 export const CLARIFY_OFFER = "I want to make sure I give you the right answer. Could you rephrase that for me? I can also put you through to a team member if you prefer.";
-export const FIRST_MESSAGE = "Hi, thanks for calling Zuki's. I'm the café's automated assistant, and this call may be recorded. How can I help you today?";
+export const FIRST_MESSAGE = "Hi, thanks for calling Zuki's. I'm the café's automated assistant. How can I help you today?";
 export const DELIBERATE_OFFER = "That's something a member of our team can help you with. Would you like me to connect you?";
 export const LOOKUP_ERROR_OFFER = "Sorry, I'm having trouble checking that right now. Would you like me to connect you with a member of our team?";
 export const CONFIRMATION = "Just to confirm, would you like me to transfer you to a member of our team?";
