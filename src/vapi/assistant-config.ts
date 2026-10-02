@@ -99,6 +99,9 @@ export function createAssistantConfig(baseUrl: string, transferNumber: string) {
         { type: "regex", regex: "£(\\d+)", value: "$1 pounds" },
       ] } },
     },
+    // Call recording is disabled (team decision 2026-10-02).
+    // Managed here, not in the dashboard, so the live assistant matches this script.
+    artifactPlan: { recordingEnabled: false },
     // Post-call summary and success evaluation for test/error tracking (team decision 2026-10-01).
     // Managed here, not in the dashboard, so the live assistant matches this script.
     analysisPlan: {
