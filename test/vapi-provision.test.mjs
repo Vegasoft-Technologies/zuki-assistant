@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { provision } from "../dist/vapi/provision.js";
-import { createLookupTool, createAssistantConfig, SYSTEM_PROMPT, TRANSFER_MESSAGE } from "../dist/vapi/assistant-config.js";
+import {
+  createLookupTool,
+  createAssistantConfig,
+  SYSTEM_PROMPT,
+  TRANSFER_MESSAGE,
+} from "../dist/vapi/assistant-config.js";
 import { createApiServer } from "../dist/api/server.js";
+process.env.VAPI_SECRET_KEY = "test-secret-123";
 
 const toolId = "11111111-1111-4111-8111-111111111111";
 const assistantId = "22222222-2222-4222-8222-222222222222";
@@ -20,18 +26,27 @@ test("provision preserves the lookup tool and configures the custom LLM", async 
     log: (line) => logs.push(line),
     fetch: async (url, init) => {
       calls.push({ url, ...init, body: JSON.parse(init.body) });
-      return Response.json({ id: calls.length === 1 ? toolId : assistantId }, { status: 201 });
+      return Response.json(
+        { id: calls.length === 1 ? toolId : assistantId },
+        { status: 201 },
+      );
     },
   });
   assert.deepEqual(result, { toolId, assistantId });
-  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
-    ["https://api.vapi.ai/tool", "POST"], ["https://api.vapi.ai/assistant", "POST"],
-  ]);
+  assert.deepEqual(
+    calls.map(({ url, method }) => [url, method]),
+    [
+      ["https://api.vapi.ai/tool", "POST"],
+      ["https://api.vapi.ai/assistant", "POST"],
+    ],
+  );
   assert.equal(calls[0].headers.Authorization, "Bearer test-secret");
   assert.equal(calls[0].body.type, "apiRequest");
   assert.deepEqual(calls[0].body.headers, {
     type: "object",
-    properties: { "Content-Type": { type: "string", value: "application/json" } },
+    properties: {
+      "Content-Type": { type: "string", value: "application/json" },
+    },
   });
   assert.equal(calls[0].body.url, "https://backend.example.com/api/lookup");
   assert.deepEqual(calls[0].body.body.required, ["query"]);
@@ -40,78 +55,144 @@ test("provision preserves the lookup tool and configures the custom LLM", async 
   assert.equal(calls[0].body.variableExtractionPlan, undefined);
   assert.equal(calls[1].body.model.toolIds, undefined);
   assert.equal(calls[1].body.model.url, "https://backend.example.com/api/vapi");
-  assert.equal(calls[1].body.model.tools[0].destinations[0].number, env.ZUKI_TEST_TRANSFER_NUMBER);
-  assert.equal(calls[1].body.model.tools[0].destinations[0].message, TRANSFER_MESSAGE);
+  assert.equal(
+    calls[1].body.model.tools[0].destinations[0].number,
+    env.ZUKI_TEST_TRANSFER_NUMBER,
+  );
+  assert.equal(
+    calls[1].body.model.tools[0].destinations[0].message,
+    TRANSFER_MESSAGE,
+  );
   assert.ok(!logs.join("\n").includes(env.VAPI_API_KEY));
 });
 
 test("rerun with saved IDs PATCHes existing resources and updates the backend URL", async () => {
   const calls = [];
-  await provision({ ...env, ZUKI_API_BASE_URL: "https://deployed.example.com/base/", VAPI_LOOKUP_TOOL_ID: toolId, VAPI_ASSISTANT_ID: assistantId }, {
-    log: quiet,
-    fetch: async (url, init) => {
-      calls.push({ url, ...init, body: JSON.parse(init.body) });
-      return Response.json({ id: url.endsWith(toolId) ? toolId : assistantId });
+  await provision(
+    {
+      ...env,
+      ZUKI_API_BASE_URL: "https://deployed.example.com/base/",
+      VAPI_LOOKUP_TOOL_ID: toolId,
+      VAPI_ASSISTANT_ID: assistantId,
     },
-  });
-  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
-    [`https://api.vapi.ai/tool/${toolId}`, "PATCH"], [`https://api.vapi.ai/assistant/${assistantId}`, "PATCH"],
-  ]);
-  assert.equal(calls[0].body.url, "https://deployed.example.com/base/api/lookup");
-  assert.equal(calls[1].body.model.url, "https://deployed.example.com/base/api/vapi");
+    {
+      log: quiet,
+      fetch: async (url, init) => {
+        calls.push({ url, ...init, body: JSON.parse(init.body) });
+        return Response.json({
+          id: url.endsWith(toolId) ? toolId : assistantId,
+        });
+      },
+    },
+  );
+  assert.deepEqual(
+    calls.map(({ url, method }) => [url, method]),
+    [
+      [`https://api.vapi.ai/tool/${toolId}`, "PATCH"],
+      [`https://api.vapi.ai/assistant/${assistantId}`, "PATCH"],
+    ],
+  );
+  assert.equal(
+    calls[0].body.url,
+    "https://deployed.example.com/base/api/lookup",
+  );
+  assert.equal(
+    calls[1].body.model.url,
+    "https://deployed.example.com/base/api/vapi",
+  );
 });
 
 test("dry run needs no credentials or number and makes no network calls", async () => {
-  const plan = await provision({}, { dryRun: true, log: quiet, fetch: () => assert.fail("network") });
+  const plan = await provision(
+    {},
+    { dryRun: true, log: quiet, fetch: () => assert.fail("network") },
+  );
   assert.equal(plan.tool.body.url, "https://zuki-api.example.com/api/lookup");
-  assert.equal(plan.assistant.body.model.tools[0].destinations[0].number, "+12025550100");
+  assert.equal(
+    plan.assistant.body.model.tools[0].destinations[0].number,
+    "+12025550100",
+  );
 });
 
 test("invalid environment is rejected before any remote mutation", async () => {
   for (const overrides of [
-    { VAPI_API_KEY: "" }, { VAPI_API_KEY: "replace_with_key" },
-    { ZUKI_TEST_TRANSFER_NUMBER: "" }, { ZUKI_TEST_TRANSFER_NUMBER: "123" },
-    { ZUKI_API_BASE_URL: "http://localhost" }, { ZUKI_API_BASE_URL: "https://user:secret@example.com" },
+    { VAPI_API_KEY: "" },
+    { VAPI_API_KEY: "replace_with_key" },
+    { ZUKI_TEST_TRANSFER_NUMBER: "" },
+    { ZUKI_TEST_TRANSFER_NUMBER: "123" },
+    { ZUKI_API_BASE_URL: "http://localhost" },
+    { ZUKI_API_BASE_URL: "https://user:secret@example.com" },
     { ZUKI_API_BASE_URL: "https://example.com?secret=foo" },
-    { VAPI_LOOKUP_TOOL_ID: "../assistant" }, { VAPI_ASSISTANT_ID: "invalid" },
+    { VAPI_LOOKUP_TOOL_ID: "../assistant" },
+    { VAPI_ASSISTANT_ID: "invalid" },
   ]) {
-    await assert.rejects(provision({ ...env, ...overrides }, { log: quiet, fetch: () => assert.fail("network") }));
+    await assert.rejects(
+      provision(
+        { ...env, ...overrides },
+        { log: quiet, fetch: () => assert.fail("network") },
+      ),
+    );
   }
 });
 
 test("tool HTTP failure stops assistant creation and does not leak response body", async () => {
   let count = 0;
-  await assert.rejects(provision(env, { log: quiet, fetch: async () => {
-    count++;
-    return new Response("test-secret", { status: 401 });
-  } }), (error) => error.message.includes("HTTP 401") && !error.message.includes("test-secret"));
+  await assert.rejects(
+    provision(env, {
+      log: quiet,
+      fetch: async () => {
+        count++;
+        return new Response("test-secret", { status: 401 });
+      },
+    }),
+    (error) =>
+      error.message.includes("HTTP 401") &&
+      !error.message.includes("test-secret"),
+  );
   assert.equal(count, 1);
 });
 
 test("partial creation reports tool ID so a retry can reuse it", async () => {
   const logs = [];
   let count = 0;
-  await assert.rejects(provision(env, { log: (line) => logs.push(line), fetch: async () => {
-    count++;
-    return count === 1 ? Response.json({ id: toolId }) : new Response("failure", { status: 500 });
-  } }), /assistant: HTTP 500/);
+  await assert.rejects(
+    provision(env, {
+      log: (line) => logs.push(line),
+      fetch: async () => {
+        count++;
+        return count === 1
+          ? Response.json({ id: toolId })
+          : new Response("failure", { status: 500 });
+      },
+    }),
+    /assistant: HTTP 500/,
+  );
   assert.deepEqual(logs, [`VAPI_LOOKUP_TOOL_ID=${toolId}`]);
 });
 
 test("uncertain network outcomes and malformed success responses require dashboard recovery", async () => {
   for (const response of [null, {}, { id: "invalid" }]) {
     let count = 0;
-    await assert.rejects(provision(env, { log: quiet, fetch: async () => {
-      count++;
-      if (response === null) throw new Error("secret in network error");
-      return Response.json(response);
-    } }), /[Cc]heck dashboard/);
+    await assert.rejects(
+      provision(env, {
+        log: quiet,
+        fetch: async () => {
+          count++;
+          if (response === null) throw new Error("secret in network error");
+          return Response.json(response);
+        },
+      }),
+      /[Cc]heck dashboard/,
+    );
     assert.equal(count, 1);
   }
 });
 
 test("custom LLM config preserves transfer, transcription and voice settings", () => {
-  const config = createAssistantConfig(env.ZUKI_API_BASE_URL, env.ZUKI_TEST_TRANSFER_NUMBER);
+  const config = createAssistantConfig(
+    env.ZUKI_API_BASE_URL,
+    env.ZUKI_TEST_TRANSFER_NUMBER,
+  );
   assert.equal(config.model.provider, "custom-llm");
   assert.equal(config.model.url, "https://backend.example.com/api/vapi");
   assert.equal(config.model.model, "zuki-router");
@@ -126,37 +207,69 @@ test("custom LLM config preserves transfer, transcription and voice settings", (
   assert.equal(config.transcriber.model, "gpt-4o-transcribe");
   assert.equal(config.transcriber.fallbackPlan.transcribers[0].model, "nova-3");
   assert.equal(config.voice.voiceId, "Elliot");
-  assert.equal(config.firstMessage, "Hello, you've reached Zuki's assistant. How can I help you?");
+  assert.equal(
+    config.firstMessage,
+    "Hello, you've reached Zuki's assistant. How can I help you?",
+  );
   assert.deepEqual(config.voice.chunkPlan.formatPlan.replacements.slice(0, 2), [
     { type: "exact", key: "Zuki's", value: "Zookee's" },
     { type: "exact", key: "Zuki", value: "Zookee" },
   ]);
-  const say = (text) => config.voice.chunkPlan.formatPlan.replacements
-    .filter((r) => r.type === "regex")
-    .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
+  const say = (text) =>
+    config.voice.chunkPlan.formatPlan.replacements
+      .filter((r) => r.type === "regex")
+      .reduce((out, r) => out.replace(new RegExp(r.regex, "g"), r.value), text);
   assert.equal(say("A cappuccino is £3.55."), "A cappuccino is 3 pounds 55.");
-  assert.equal(say("£29.95 for 2 people, or £52.95 for 4 people"), "29 pounds 95 for 2 people, or 52 pounds 95 for 4 people");
+  assert.equal(
+    say("£29.95 for 2 people, or £52.95 for 4 people"),
+    "29 pounds 95 for 2 people, or 52 pounds 95 for 4 people",
+  );
   assert.equal(say("Entry is £5."), "Entry is 5 pounds.");
-  assert.equal(createLookupTool(env.ZUKI_API_BASE_URL).name, "lookup_zuki_info");
+  assert.equal(
+    createLookupTool(env.ZUKI_API_BASE_URL).name,
+    "lookup_zuki_info",
+  );
 });
 
 test("legacy /api/lookup contract remains unchanged", async () => {
   const results = {
-    "sunday": { status: "answered", text: "On sunday, Zuki's closes at 4 PM." },
-    "sushi": { status: "transfer_required", text: "I'm not sure about that. Let me transfer you to someone who can help." },
-    "breakfast": { status: "unavailable", text: "I could not verify that response against the current menu data." },
+    sunday: { status: "answered", text: "On sunday, Zuki's closes at 4 PM." },
+    sushi: {
+      status: "transfer_required",
+      text: "I'm not sure about that. Let me transfer you to someone who can help.",
+    },
+    breakfast: {
+      status: "unavailable",
+      text: "I could not verify that response against the current menu data.",
+    },
   };
   const app = createApiServer({ lookup: async (query) => results[query] });
-  const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
-  const post = async (query) => (await fetch(`http://127.0.0.1:${server.address().port}/api/lookup`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query }),
-  })).json();
+  const server = await new Promise((resolve) => {
+    const s = app.listen(0, () => resolve(s));
+  });
+  const post = async (query) =>
+    (
+      await fetch(`http://127.0.0.1:${server.address().port}/api/lookup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-vapi-secret": process.env.VAPI_SECRET_KEY,
+        },
+        body: JSON.stringify({ query }),
+      })
+    ).json();
   try {
-    assert.deepEqual(await post("sunday"), { status: "answered", response: "On sunday, Zuki's closes at 4 PM." });
+    assert.deepEqual(await post("sunday"), {
+      status: "answered",
+      response: "On sunday, Zuki's closes at 4 PM.",
+    });
     for (const query of ["sushi", "breakfast"]) {
       const body = await post(query);
       assert.equal(body.response, TRANSFER_MESSAGE);
-      assert.deepEqual(body, { status: results[query].status, response: TRANSFER_MESSAGE });
+      assert.deepEqual(body, {
+        status: results[query].status,
+        response: TRANSFER_MESSAGE,
+      });
     }
   } finally {
     await new Promise((resolve) => server.close(resolve));

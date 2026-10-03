@@ -3,23 +3,50 @@ import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { z } from "zod";
 import type { KnowledgeSafeAssistantService } from "../assistant/knowledge-safe-service.js";
+import { vapiAuthMiddleware } from "./auth.js";
 
-import { buildCompletion, buildSse, createOfferMemory, routeConversation, transferAction, transferToolShape } from "../vapi/custom-llm.js";
+import {
+  buildCompletion,
+  buildSse,
+  createOfferMemory,
+  routeConversation,
+  transferAction,
+  transferToolShape,
+} from "../vapi/custom-llm.js";
 
 const completionRequestSchema = z.object({
-  messages: z.array(z.object({
-    role: z.string(),
-    content: z.union([z.string(), z.array(z.object({ type: z.string(), text: z.string().optional() })), z.null()]).optional(),
-  })),
+  messages: z.array(
+    z.object({
+      role: z.string(),
+      content: z
+        .union([
+          z.string(),
+          z.array(z.object({ type: z.string(), text: z.string().optional() })),
+          z.null(),
+        ])
+        .optional(),
+    }),
+  ),
   tools: z.array(z.unknown()).optional(),
   stream: z.boolean().optional(),
   // Only the id is used; a malformed call object must never reject the turn.
-  call: z.object({ id: z.string().min(1) }).optional().catch(undefined),
+  call: z
+    .object({ id: z.string().min(1) })
+    .optional()
+    .catch(undefined),
 });
 
-function sendCompletion(res: Response, action: Parameters<typeof buildCompletion>[0], stream = true) {
+function sendCompletion(
+  res: Response,
+  action: Parameters<typeof buildCompletion>[0],
+  stream = true,
+) {
   if (stream) {
-    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+    res.set({
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
     res.end(buildSse(action));
   } else {
     res.json(buildCompletion(action));
@@ -31,19 +58,11 @@ const lookupRequestSchema = z.object({
     .string()
     .min(1, "Query is required")
     .max(2000, "Query is too long")
-    .refine(
-      (value) => value.trim().length > 0,
-      "Query is required",
-    ),
+    .refine((value) => value.trim().length > 0, "Query is required"),
 });
 
-function isMalformedJsonError(
-  error: unknown,
-): boolean {
-  if (
-    typeof error !== "object" ||
-    error === null
-  ) {
+function isMalformedJsonError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
     return false;
   }
 
@@ -52,19 +71,11 @@ function isMalformedJsonError(
     type?: unknown;
   };
 
-  return (
-    candidate.status === 400 &&
-    candidate.type === "entity.parse.failed"
-  );
+  return candidate.status === 400 && candidate.type === "entity.parse.failed";
 }
 
-function isPayloadTooLargeError(
-  error: unknown,
-): boolean {
-  if (
-    typeof error !== "object" ||
-    error === null
-  ) {
+function isPayloadTooLargeError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
     return false;
   }
 
@@ -73,19 +84,11 @@ function isPayloadTooLargeError(
     type?: unknown;
   };
 
-  return (
-    candidate.status === 413 ||
-    candidate.type === "entity.too.large"
-  );
+  return candidate.status === 413 || candidate.type === "entity.too.large";
 }
 
-function isUnsupportedMediaError(
-  error: unknown,
-): boolean {
-  if (
-    typeof error !== "object" ||
-    error === null
-  ) {
+function isUnsupportedMediaError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
     return false;
   }
 
@@ -117,35 +120,58 @@ export function createApiServer(
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  app.post("/api/vapi/chat/completions", async (req: Request, res: Response): Promise<void> => {
-    const parsed = completionRequestSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: "Invalid request format", details: z.treeifyError(parsed.error) });
-      return;
-    }
-    const { messages, tools, stream, call } = parsed.data;
-    try {
-      if (!loggedTransferShape) {
-        const shape = transferToolShape(tools);
-        if (shape) {
-          loggedTransferShape = true;
-          console.info("Vapi transferCall schema:", shape);
+  app.post(
+    "/api/vapi/chat/completions",
+    vapiAuthMiddleware,
+    async (req: Request, res: Response): Promise<void> => {
+      const parsed = completionRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res
+          .status(400)
+          .json({
+            error: "Invalid request format",
+            details: z.treeifyError(parsed.error),
+          });
+        return;
+      }
+      const { messages, tools, stream, call } = parsed.data;
+      try {
+        if (!loggedTransferShape) {
+          const shape = transferToolShape(tools);
+          if (shape) {
+            loggedTransferShape = true;
+            console.info("Vapi transferCall schema:", shape);
+          }
         }
+        if (!loggedCallId) {
+          loggedCallId = true;
+          console.info(
+            "Vapi custom LLM request has call id:",
+            call !== undefined,
+          );
+        }
+        const offers = call ? offerMemory.forCall(call.id) : undefined;
+        const action = await routeConversation(
+          messages,
+          tools,
+          assistantService,
+          process.env.ZUKI_TEST_TRANSFER_NUMBER,
+          offers,
+        );
+        sendCompletion(res, action, stream);
+      } catch {
+        sendCompletion(
+          res,
+          transferAction(tools, process.env.ZUKI_TEST_TRANSFER_NUMBER),
+          stream,
+        );
       }
-      if (!loggedCallId) {
-        loggedCallId = true;
-        console.info("Vapi custom LLM request has call id:", call !== undefined);
-      }
-      const offers = call ? offerMemory.forCall(call.id) : undefined;
-      const action = await routeConversation(messages, tools, assistantService, process.env.ZUKI_TEST_TRANSFER_NUMBER, offers);
-      sendCompletion(res, action, stream);
-    } catch {
-      sendCompletion(res, transferAction(tools, process.env.ZUKI_TEST_TRANSFER_NUMBER), stream);
-    }
-  });
+    },
+  );
 
   app.post(
     "/api/lookup",
+    vapiAuthMiddleware,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         const parsed = lookupRequestSchema.safeParse(req.body);
